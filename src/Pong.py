@@ -17,8 +17,8 @@ class Game:
         #self.ball_sprite = pygame.sprite.Group()
 
         # classes
-        self.player = Player((self.all_sprites, self.paddle_sprites))
-        self.ball = Ball((self.all_sprites, self.paddle_sprites))
+        self.player = Player(self.all_sprites, self.paddle_sprites)
+        self.ball = Ball(self.all_sprites, paddle_sprites=self.paddle_sprites)
 
     def run(self):
         while self.runing:
