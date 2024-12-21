@@ -20,7 +20,7 @@ class Game:
         Opponent((self.all_sprites, self.paddle_sprites), ball=self.ball)
 
         # score
-        self.score = {'player': 0, 'opponent': 0}
+        #self.score = {'player': 0, 'opponent': 0}
         self.load_score()
         self.font = pygame.Font(None, 60)
 
@@ -46,9 +46,11 @@ class Game:
             json.dump(self.score, file)
 
     def load_score(self):
-        if os.path.exists('data/score.json'):
+        try:
             with open('data/score.json', 'r') as file:
                 self.score = json.load(file)
+        except:
+            self.score = {'player': 0, 'opponent': 0}
 
     def run(self):
         while self.runing:
@@ -67,9 +69,6 @@ class Game:
             self.all_sprites.draw(self.display_surface)
             pygame.display.update()
         pygame.quit()
-
-    def collisions(self):
-        pass
 
 def main():
     game = Game()

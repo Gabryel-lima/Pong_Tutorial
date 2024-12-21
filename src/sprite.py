@@ -66,14 +66,19 @@ class Ball(pygame.sprite.Sprite):
         pygame.draw.circle(self.image, COLORS['ball'], (SIZE['ball'][0] / 2, SIZE['ball'][1] / 2), SIZE['ball'][0] / 2)
 
         # rect & movement
-        self.rect = self.image.get_frect(center = (WINDOW_HEIGHT / 2, WINDOW_WIDTH / 2))
+        self.rect = self.image.get_frect(center = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2))
         self.old_rect = self.rect.copy()
         self.direction = pygame.Vector2(x=choice((-1, 1)), y=uniform(0.4, 0.8) * choice((1, -1)))
 
+        # timer
+        self.start_time = pygame.time.get_ticks()
+        self.duration = 1200
+        self.speed_modifier = 0
+
     def move(self, dt):
-        self.rect.x += self.direction.x * SPEED['ball'] * dt
+        self.rect.x += self.direction.x * SPEED['ball'] * dt * self.speed_modifier
         self.collision('horizontal')
-        self.rect.y += self.direction.y * SPEED['ball'] * dt 
+        self.rect.y += self.direction.y * SPEED['ball'] * dt * self.speed_modifier 
         self.collision('vertical')
 
     def collision(self, direction):
@@ -116,10 +121,18 @@ class Ball(pygame.sprite.Sprite):
         #    self.direction.x *= -1
 
     def reset(self):
-        self.rect.center = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
+        self.rect.center = (WINDOW_WIDTH / 2 + 1, WINDOW_HEIGHT / 2) # +1 ajustar a pos da bolinha na linha
         self.direction = pygame.Vector2(x=choice((-1, 1)), y=uniform(0.4, 0.8) * choice((1, -1)))
+        self.start_time = pygame.time.get_ticks()
+
+    def timer(self):
+        if pygame.time.get_ticks() - self.start_time >= self.duration:
+            self.speed_modifier = 1
+        else:
+            self.speed_modifier = 0
 
     def update(self, dt):
         self.old_rect = self.rect.copy()
+        self.timer()
         self.move(dt)
         self.wall_collision()
