@@ -11,29 +11,55 @@ class Paddle(pygame.sprite.Sprite):
 
         # rect & movement
         self.rect = self.image.get_frect(center = (POS['player']))
+        self.old_rect = self.rect.copy()
         self.direction = 0
         self.speed = SPEED['player']
-
-class Player(Paddle):
-    def __init__(self, *groups):
-        super().__init__(*groups)
 
     def move(self, dt):
         self.rect.centery += self.direction * self.speed * dt
         self.rect.top = 0 if self.rect.top < 0 else self.rect.top
         self.rect.bottom = WINDOW_HEIGHT if self.rect.bottom > WINDOW_HEIGHT else self.rect.bottom
 
-    def get_direction(self):
-        keys = pygame.key.get_pressed()
-        self.direction = int(keys[pygame.K_DOWN] - keys[pygame.K_UP]) 
-
     def update(self, dt):
+        self.old_rect = self.rect.copy()
         self.get_direction()
         self.move(dt)
 
-class Ball(pygame.sprite.Sprite):
-    def __init__(self, *groups, paddle_sprites):
+class Opponent(Paddle):
+    def __init__(self, *groups, ball):
         super().__init__(*groups)
+        self.speed = SPEED['opponent']
+        self.rect.center = POS['opponent']
+        self.ball = ball
+
+    def get_direction(self):
+        self.direction = 1 if self.ball.rect.centery > self.rect.centery else -1
+
+    def move(self, dt):
+        return super().move(dt)
+
+    def update(self, dt):
+        return super().update(dt)
+
+class Player(Paddle):
+    def __init__(self, *groups):
+        super().__init__(*groups)
+
+    def get_direction(self):
+        keys = pygame.key.get_pressed()
+        self.direction = int(keys[pygame.K_DOWN] - keys[pygame.K_UP])
+
+    def move(self, dt):
+        return super().move(dt)
+
+    def update(self, dt):
+        return super().update(dt)
+
+class Ball(pygame.sprite.Sprite):
+    def __init__(self, *groups, paddle_sprites, update_score):
+        super().__init__(*groups)
+        self.paddle_sprites = paddle_sprites
+        self.update_score = update_score
 
         # image
         self.image = pygame.Surface(SIZE['ball'], pygame.SRCALPHA)
@@ -47,7 +73,7 @@ class Ball(pygame.sprite.Sprite):
     def move(self, dt):
         self.rect.x += self.direction.x * SPEED['ball'] * dt
         self.collision('horizontal')
-        self.rect.y += self.direction.y * SPEED['ball'] * dt
+        self.rect.y += self.direction.y * SPEED['ball'] * dt 
         self.collision('vertical')
 
     def collision(self, direction):
@@ -77,13 +103,21 @@ class Ball(pygame.sprite.Sprite):
             self.rect.bottom = WINDOW_HEIGHT
             self.direction.y *= -1
 
-        if self.rect.right >= WINDOW_WIDTH:
-            self.rect.right = WINDOW_WIDTH
-            self.direction.x *= -1
+        if self.rect.right >= WINDOW_WIDTH or self.rect.left <= 0:
+            self.update_score('player' if self.rect.x < WINDOW_WIDTH / 2 else 'opponent')
+            self.reset()
 
-        if self.rect.left <= 0:
-            self.rect.left = 0
-            self.direction.x *= -1
+        #if self.rect.right >= WINDOW_WIDTH:
+        #    self.rect.right = WINDOW_WIDTH
+        #    self.direction.x *= -1
+
+        #if self.rect.left <= 0:
+        #    self.rect.left = 0
+        #    self.direction.x *= -1
+
+    def reset(self):
+        self.rect.center = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
+        self.direction = pygame.Vector2(x=choice((-1, 1)), y=uniform(0.4, 0.8) * choice((1, -1)))
 
     def update(self, dt):
         self.old_rect = self.rect.copy()
