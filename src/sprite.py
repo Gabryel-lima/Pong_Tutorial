@@ -29,6 +29,9 @@ class Paddle(pygame.sprite.Sprite):
         self.get_direction()
         self.move(dt)
 
+    def reset(self):
+        self.rect.center = POS['player']
+
 class Opponent(Paddle):
     def __init__(self, *groups, ball):
         super().__init__(*groups)
@@ -36,8 +39,11 @@ class Opponent(Paddle):
         self.rect.center = POS['opponent']
         self.ball = ball
 
-    def get_direction(self):
-        self.direction = 1 if self.ball.rect.centery > self.rect.centery else -1
+    def get_direction(self, action=None):
+        if action is not None:
+            self.direction = action
+        else:
+            self.direction = 0 if self.ball.rect.centery > self.rect.centery else -1
 
     def move(self, dt):
         return super().move(dt)
@@ -82,6 +88,9 @@ class Ball(pygame.sprite.Sprite):
         self.start_time = pygame.time.get_ticks()
         self.duration = 1200
         self.speed_modifier = 0
+
+    def get_distance(self, paddle):
+        return self.rect.centerx - paddle.rect.centerx
 
     def move(self, dt):
         self.rect.x += self.direction.x * SPEED['ball'] * dt * self.speed_modifier
