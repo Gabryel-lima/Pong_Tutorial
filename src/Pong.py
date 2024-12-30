@@ -3,6 +3,8 @@ from settings import *
 from sprite import Player, Ball, Opponent
 from groups import AllSprites
 
+from typing import Callable
+
 def scaled_surface_percent(surf, percentage):
     """Return a scaled surface based on the percentage."""
     width, height = surf.get_size()
@@ -35,8 +37,10 @@ class Game:
         # sprites
         self.all_sprites = AllSprites()
         self.paddle_sprites = pygame.sprite.Group()
-        self.player = Player((self.all_sprites, self.paddle_sprites))
+
+        # classes
         self.ball = Ball((self.all_sprites), paddle_sprites=self.paddle_sprites, update_score=self.update_score)
+        self.player = Player((self.all_sprites, self.paddle_sprites), ball=self.ball)
         self.opponent = Opponent((self.all_sprites, self.paddle_sprites), ball=self.ball)
 
         # font
@@ -60,7 +64,7 @@ class Game:
         # line separator
         pygame.draw.line(self.screen, COLORS['bg detail'], (WINDOW_WIDTH / 2, 0), (WINDOW_WIDTH / 2, WINDOW_HEIGHT), 5)
 
-    def update_score(self, side):
+    def update_score(self, side: Callable[[str], None]):
         self.score['player' if side == 'player' else 'opponent'] += 1
 
     def save_score(self):
@@ -84,8 +88,6 @@ class Game:
 
     def reset_game(self):
         self.load_score(reset=True)
-        #self.player.reset()
-        #self.ball.reset()
 
     def _render_game(self):
         while self.runing:
@@ -93,7 +95,6 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.runing = False
-                    #self.save_score()
 
             # update
             self.all_sprites.update(dt)
@@ -113,7 +114,7 @@ class Game:
 
     def run(self):
         while self.runing:
-            dt = self.clock.tick(FPS) / 1000 # Divide por 1000 para converter milissegundos em segundos
+            dt = self.clock.tick(FPS) / 1000 # seconds
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.runing = False

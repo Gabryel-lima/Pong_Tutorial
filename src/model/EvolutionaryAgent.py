@@ -86,7 +86,8 @@ class EvolutionaryAgent:
         while not time_step.is_last():
             state = time_step.observation
             action_values = model(np.expand_dims(state, axis=0), training=False)
-            action = int(np.argmax(action_values.numpy()[0]))
+            action_idx = int(np.argmax(action_values.numpy()[0]))
+            action = action_idx - 1 # [0, 1] -> [-1, 0, 1]
             time_step = self.env.step(action)
             total_reward += time_step.reward
 
@@ -168,7 +169,7 @@ class EvolutionaryAgent:
         if self.model is None:
             print("Nenhum modelo disponível para avaliação.")
             return
-
+        
         best_individual = self.model
         fitness = self._evaluate_individual(best_individual)
         print(f"Melhor Fitness: {fitness:.2f}")
@@ -198,8 +199,8 @@ if __name__ == "__main__":
     evolutionary_agent = EvolutionaryAgent(
         env=custom_pyenv,
         population_size=10,
-        num_generations=20,
-        mutation_rate=0.1, 
+        num_generations=50,
+        mutation_rate=0.3, 
         elite_fraction=0.2,
         set_seed=False
     )

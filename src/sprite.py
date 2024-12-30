@@ -1,6 +1,8 @@
 from settings import *
 from random import choice, uniform
 
+from typing import Callable
+
 class Paddle(pygame.sprite.Sprite):
     def __init__(self, *groups):
         super().__init__(*groups)
@@ -30,43 +32,63 @@ class Paddle(pygame.sprite.Sprite):
         self.move(dt)
 
     def reset(self):
-        self.rect.center = POS['player']
+        self.rect.center = POS['player'] or POS['opponent']
 
 class Opponent(Paddle):
     def __init__(self, *groups, ball):
         super().__init__(*groups)
+
+        # rect & movement
         self.speed = SPEED['opponent']
         self.rect.center = POS['opponent']
+
+        # reference
         self.ball = ball
 
     def get_direction(self, action=None):
         if action is not None:
             self.direction = action
-        else:
-            self.direction = 0 if self.ball.rect.centery > self.rect.centery else -1
+        # else:
+        #     self.direction = 1 if self.ball.rect.centery > WINDOW_HEIGHT else -1
 
     def move(self, dt):
         return super().move(dt)
 
     def update(self, dt):
         return super().update(dt)
+    
+    def reset(self):
+        self.rect.center = POS['opponent']
 
 class Player(Paddle):
-    def __init__(self, *groups):
+    def __init__(self, *groups, ball):
         super().__init__(*groups)
 
+        # # rect & movement
+        # self.speed = SPEED['opponent']
+        # self.rect.center = POS['opponent']
+
+        # reference
+        self.ball = ball
+
     def get_direction(self):
-        keys = pygame.key.get_pressed()
-        self.direction = int(keys[pygame.K_DOWN] - keys[pygame.K_UP])
+        # keys = pygame.key.get_pressed()
+        # self.direction = int(keys[pygame.K_DOWN] - keys[pygame.K_UP])
+        # -------------------------------------------------------------- #
+
+        self.direction = 1 if self.ball.rect.centery > self.rect.centery else -1
 
     def move(self, dt):
         return super().move(dt)
 
     def update(self, dt):
         return super().update(dt)
+    
+    def reset(self):
+        self.rect.center = POS['player']
 
 class Ball(pygame.sprite.Sprite):
-    def __init__(self, *groups, paddle_sprites, update_score):
+    def __init__(self, *groups, paddle_sprites, update_score: Callable[[str], None]):
         super().__init__(*groups)
         self.paddle_sprites = paddle_sprites
         self.update_score = update_score
@@ -117,16 +139,20 @@ class Ball(pygame.sprite.Sprite):
                         self.direction.y *= -1
 
     def wall_collision(self):
+        # top
         if self.rect.top <= 0:
             self.rect.top = 0
             self.direction.y *= -1
 
+        # bottom
         if self.rect.bottom >= WINDOW_HEIGHT:
             self.rect.bottom = WINDOW_HEIGHT
             self.direction.y *= -1
 
+        # out of bounds
         if self.rect.right >= WINDOW_WIDTH or self.rect.left <= 0:
-            self.update_score('player' if self.rect.x < WINDOW_WIDTH / 2 else 'opponent')
+            scorer = 'player' if self.rect.x < WINDOW_WIDTH / 2 else 'opponent'
+            self.update_score(scorer)
             self.reset()
 
         #if self.rect.right >= WINDOW_WIDTH:

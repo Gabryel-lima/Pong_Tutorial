@@ -33,8 +33,9 @@ class CustomPyEnvironment(PyEnvironment):
         self.game = Game()  # Inicializa o jogo
         self.render_mode = render_mode
         # Define as especificações do espaço de ações (movimento do jogador)
-        self._action_spec = BoundedArraySpec(shape=(), dtype=np.int32, minimum=0, maximum=1, name="action")
-        # Define as especificações do espaço de observação (janela do jogo)
+        self._action_spec = BoundedArraySpec(shape=(), dtype=np.int32, minimum=-1, maximum=1, name="action")
+
+        # 
         self._observation_spec = BoundedArraySpec(
             shape=(self.game.scaled.get_width(), self.game.scaled.get_height(), 3),
             dtype=np.float32, minimum=0.0, maximum=1.0, name="observation"
@@ -82,9 +83,10 @@ class CustomPyEnvironment(PyEnvironment):
         Returns:
             ts.TimeStep: O próximo estado do ambiente após a execução da ação.
         """
-        self._apply_action(action)  # Aplica a ação ao jogador
-        reward, done = self.calculate_reward(action)  # Calcula a recompensa
-        obs = self.get_obs()  # Obtém a nova observação
+        print(action)
+        self._apply_action(action)
+        reward, done = self.calculate_reward(action)
+        obs = self.get_obs()
 
         step_type = ts.StepType.MID if not done else ts.StepType.LAST
         discount = 1.0 if not done else 0.0
@@ -116,10 +118,11 @@ class CustomPyEnvironment(PyEnvironment):
         Aplica a ação especificada ao jogador.
 
         Args:
-            action (int): Ação a ser aplicada (0 - mover para cima, 1 - mover para baixo).
+            action (int): Ação a ser aplicada (-1 - mover para cima, 1 - mover para baixo).
         """
+        
         self.game.opponent.get_direction(action)
-        self.game.opponent.move(action)
+        self.game.opponent.move(self.game.clock.tick() / 1000)
 
     def calculate_reward(self, action: int) -> tuple[float, bool]:
         """
@@ -136,36 +139,32 @@ class CustomPyEnvironment(PyEnvironment):
 
         # Posicionamento da bola e do jogador
         ball_distance = self.game.ball.get_distance(self.game.opponent)
-        tolerance = 10  # Tolerância para considerar o alinhamento como "perfeito"
+        tolerance = 5
 
         # Recompensa por manter a bola centralizada
         if abs(ball_distance) <= tolerance:
-            reward += 1.0  # Alta recompensa por manter a bola alinhada ao centro
+            reward += 1.0
         else:
-            # Penalidade proporcional à distância, menor para evitar desmotivação
-            reward -= 0.0003 * abs(ball_distance)
+            reward -= 0.003 * abs(ball_distance)
 
-        score_opponent = self.game.score['opponent']
-        score_player = self.game.score['player']
-        
-        if score_opponent < score_player:
+        if self.game.score['player'] > self.game.score['opponent']:
             reward -= 5.0
             self.game.reset_game()
             pygame.time.wait(200)
             done = True
 
-        # Recompensa por colidir com a bola (indica sucesso em manter a bola)
+        # Recompensa por colidir com a bola
         if self.game.opponent.rect <= self.game.ball.rect:
-            reward += 10.0
+            reward += 10.0 
 
         return reward, done
 
     def get_obs(self) -> np.ndarray:
         """
-        Obtém a observação atual do ambiente (frame renderizado).
+        Obtém a observação atual do ambiente.
 
         Returns:
-            np.ndarray: Frame do jogo normalizado (valores entre 0 e 1).
+            np.ndarray: A observação baseada na posição vertical da bola. TODO Vai ser melhor do que pegar um vetor do ambiente todo
         """
         obs = self.game._render_game() / 255.0
         return obs
@@ -180,8 +179,9 @@ class CustomPyEnvironment(PyEnvironment):
         if mode == "human":
             self.game._render_game()
             pygame.display.update()
+    
         elif mode == "rgb_array":
-            return np.array(pygame.surfarray.array3d(self.game.screen), dtype=np.float32)
+            return np.array(pygame.surfarray.array3d(self.game.scaled), dtype=np.float32)
         
         else:
             self.close()
