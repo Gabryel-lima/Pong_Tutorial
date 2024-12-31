@@ -11,6 +11,8 @@ from tf_agents.specs import BoundedArraySpec
 from tf_agents.environments.py_environment import PyEnvironment
 from tf_agents.trajectories import time_step as ts
 
+import matplotlib.pyplot as plt
+
 # from Pong import Game
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -22,6 +24,10 @@ class EvolutionaryAgent:
                  mutation_rate: float = 0.1, elite_fraction: float = 0.2, set_seed: bool = True,
                  seed_np: int = None, seed_random: int = None, seed_tf: int = None):
         
+        # population_size
+        if population_size < 10:
+            raise ValueError("O tamanho da população não pode ser menor que 10.")
+
         # environment
         self.env = env
 
@@ -71,9 +77,9 @@ class EvolutionaryAgent:
 
     def _create_model(self):
         model = keras.Sequential([
-            keras.layers.Flatten(input_shape=self.input_shape),
+            keras.layers.Input(self.input_shape),
             keras.layers.Dense(32, activation='relu'),
-            keras.layers.Dense(self.num_actions, activation='linear')
+            keras.layers.Dense(self.num_actions, activation='tanh')
         ])
         return model
 
@@ -148,12 +154,14 @@ class EvolutionaryAgent:
             max_fitness = np.max(fitnesses)
             avg_fitness = np.mean(fitnesses)
             self.fitness_history.append(max_fitness)
+
             print(f"Geração {generation +1}/{self.num_generations} - Melhor Fitness: {max_fitness:.2f} - Fitness Médio: {avg_fitness:.2f}")
             
             best_index = np.argmax(fitnesses)
             if fitnesses[best_index] > best_fitness_overall:
                 best_fitness_overall = fitnesses[best_index]
                 self.model = self.population[best_index]
+
                 print(f"Novo melhor modelo encontrado com fitness: {best_fitness_overall:.2f}")
 
             elite = self._select_elite(fitnesses)
@@ -193,14 +201,22 @@ class EvolutionaryAgent:
         else:
             print("Nenhum modelo para salvar.")
 
+    def plot_fitness(self) -> None:
+        plt.plot(self.fitness_history)
+        plt.title('Histórico do Melhor Fitness')
+        plt.xlabel('Geração')
+        plt.ylabel('Fitness')
+        plt.grid(True)
+        plt.savefig('train')
+
 if __name__ == "__main__":
     custom_pyenv = CustomPyEnvironment()
     
     evolutionary_agent = EvolutionaryAgent(
         env=custom_pyenv,
         population_size=10,
-        num_generations=50,
-        mutation_rate=0.3, 
+        num_generations=30,
+        mutation_rate=0.8, 
         elite_fraction=0.2,
         set_seed=False
     )
@@ -210,4 +226,6 @@ if __name__ == "__main__":
 
     evolutionary_agent.save_best_model('src/model/best_model.keras')
     evolutionary_agent.save_best_model_tflite('src/model/best_model.tflite')
+
+    evolutionary_agent.plot_fitness()
 

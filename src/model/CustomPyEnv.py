@@ -8,6 +8,7 @@ import numpy as np
 import random
 import pygame
 
+from settings import SPEED
 from Pong import Game
 
 class CustomPyEnvironment(PyEnvironment):
@@ -22,6 +23,7 @@ class CustomPyEnvironment(PyEnvironment):
     __metadata__ = {"render_modes": ["human", "rgb_array"], "render_fps": 60} #TODO: Ainda não utilizado
 
     def __init__(self, render_mode: str = None, seed: int = None):
+        super().__init__()
         """
         Inicializa o ambiente personalizado.
 
@@ -29,15 +31,16 @@ class CustomPyEnvironment(PyEnvironment):
             render_mode (str, opcional): Define como o jogo deve ser renderizado ('human' ou 'rgb_array').
             seed (int, opcional): Define a semente para gerar resultados reprodutíveis.
         """
-        super().__init__()
-        self.game = Game()  # Inicializa o jogo
+
+        self.game = Game()
         self.render_mode = render_mode
-        # Define as especificações do espaço de ações (movimento do jogador)
+
+        # define action space
         self._action_spec = BoundedArraySpec(shape=(), dtype=np.int32, minimum=-1, maximum=1, name="action")
 
-        # 
+        # define obs space
         self._observation_spec = BoundedArraySpec(
-            shape=(self.game.scaled.get_width(), self.game.scaled.get_height(), 3),
+            shape=(2, ),
             dtype=np.float32, minimum=0.0, maximum=1.0, name="observation"
         )
 
@@ -69,28 +72,26 @@ class CustomPyEnvironment(PyEnvironment):
         Returns:
             ts.TimeStep: O estado inicial do ambiente após o reset.
         """
-        self.game.reset_game()  # Reseta o estado do jogo
-        obs = self.get_obs()  # Obtém a observação atual
-        return self._create_timestep(obs, ts.StepType.FIRST, 0.0, 1.0)
+        self.game.reset_game()
+        return self._create_timestep(self.get_obs(), ts.StepType.FIRST, 0.0, 1.0)
 
     def _step(self, action: int) -> ts.TimeStep:
         """
         Executa uma ação no ambiente.
-
+    
         Args:
             action (int): Ação a ser tomada (0, 1).
-
+    
         Returns:
             ts.TimeStep: O próximo estado do ambiente após a execução da ação.
         """
-        print(action)
         self._apply_action(action)
         reward, done = self.calculate_reward(action)
         obs = self.get_obs()
-
+    
         step_type = ts.StepType.MID if not done else ts.StepType.LAST
         discount = 1.0 if not done else 0.0
-
+    
         return self._create_timestep(obs, step_type, reward, discount)
 
     def _create_timestep(self, obs, step_type, reward, discount) -> ts.TimeStep:
@@ -120,43 +121,36 @@ class CustomPyEnvironment(PyEnvironment):
         Args:
             action (int): Ação a ser aplicada (-1 - mover para cima, 1 - mover para baixo).
         """
-        
-        self.game.opponent.get_direction(action)
-        self.game.opponent.move(self.game.clock.tick() / 1000)
+        self.game.ai_agent.get_direction(action)
+        self.game.ai_agent.move(self.game.clock.tick() / 1000)
 
     def calculate_reward(self, action: int) -> tuple[float, bool]:
         """
         Calcula a recompensa para o jogador com base na posição da bola e do jogador.
-
+    
         Args:
             action (int): Ação tomada pelo jogador.
-
+    
         Returns:
             tuple[float, bool]: Recompensa obtida e se o episódio terminou.
         """
         reward = 0.0
         done = False
-
-        # Posicionamento da bola e do jogador
-        ball_distance = self.game.ball.get_distance(self.game.opponent)
-        tolerance = 5
-
-        # Recompensa por manter a bola centralizada
-        if abs(ball_distance) <= tolerance:
-            reward += 1.0
-        else:
-            reward -= 0.003 * abs(ball_distance)
-
-        if self.game.score['player'] > self.game.score['opponent']:
+    
+        if self.game.ball.rect.right < self.game.ai_agent.rect.left:
             reward -= 5.0
-            self.game.reset_game()
-            pygame.time.wait(200)
             done = True
-
-        # Recompensa por colidir com a bola
-        if self.game.opponent.rect <= self.game.ball.rect:
-            reward += 10.0 
-
+    
+        if self.game.ai_agent.rect.colliderect(self.game.ball.rect):
+            reward += 3.0
+    
+        distance = abs(self.game.ball.rect.centery - self.game.ai_agent.rect.centery)
+        reward += 1.0 / (distance + 1)
+    
+        if done:
+            self.game.reset_game()
+            #self.reset()
+    
         return reward, done
 
     def get_obs(self) -> np.ndarray:
@@ -164,7 +158,7 @@ class CustomPyEnvironment(PyEnvironment):
         Obtém a observação atual do ambiente.
 
         Returns:
-            np.ndarray: A observação baseada na posição vertical da bola. TODO Vai ser melhor do que pegar um vetor do ambiente todo
+            np.ndarray: A observação baseada na posição da bola (x, y), posição do paddle do agente e velocidade da bola.
         """
         obs = self.game._render_game() / 255.0
         return obs
@@ -181,7 +175,7 @@ class CustomPyEnvironment(PyEnvironment):
             pygame.display.update()
     
         elif mode == "rgb_array":
-            return np.array(pygame.surfarray.array3d(self.game.scaled), dtype=np.float32)
+            return np.array([self.game.ai_agent.rect.y, self.game.ball.rect.y], dtype=np.float32)
         
         else:
             self.close()

@@ -32,7 +32,7 @@ class Paddle(pygame.sprite.Sprite):
         self.move(dt)
 
     def reset(self):
-        self.rect.center = POS['player'] or POS['opponent']
+        self.rect.center = POS['player'] or POS['opponent'] or POS['ai']
 
 class Opponent(Paddle):
     def __init__(self, *groups, ball):
@@ -45,18 +45,29 @@ class Opponent(Paddle):
         # reference
         self.ball = ball
 
+    def get_direction(self):
+        self.direction = 1 if self.ball.rect.centery > self.rect.centery else -1
+    
+    def reset(self):
+        self.rect.center = POS['opponent']
+
+class AiAgent(Paddle):
+    def __init__(self, *groups, ball):
+        super().__init__(*groups)
+
+        # reference
+        self.ball = ball
+
+        # rect & movement
+        self.speed = SPEED['ai']
+        self.rect.center = POS['ai']
+
     def get_direction(self, action=None):
         if action is not None:
-            self.direction = action
+            self.rect.centery += action * self.speed
         # else:
-        #     self.direction = 1 if self.ball.rect.centery > WINDOW_HEIGHT else -1
+        #     self.rect.centery += 1 if self.ball.rect.centery > self.rect.centery else -1
 
-    def move(self, dt):
-        return super().move(dt)
-
-    def update(self, dt):
-        return super().update(dt)
-    
     def reset(self):
         self.rect.center = POS['opponent']
 
@@ -77,12 +88,6 @@ class Player(Paddle):
         # -------------------------------------------------------------- #
 
         self.direction = 1 if self.ball.rect.centery > self.rect.centery else -1
-
-    def move(self, dt):
-        return super().move(dt)
-
-    def update(self, dt):
-        return super().update(dt)
     
     def reset(self):
         self.rect.center = POS['player']
@@ -155,11 +160,12 @@ class Ball(pygame.sprite.Sprite):
             self.update_score(scorer)
             self.reset()
 
-        #if self.rect.right >= WINDOW_WIDTH:
+        # if self.rect.right >= WINDOW_WIDTH:
         #    self.rect.right = WINDOW_WIDTH
         #    self.direction.x *= -1
 
-        #if self.rect.left <= 0:
+        # if self.rect.left <= 0:
+        #     self.reset()
         #    self.rect.left = 0
         #    self.direction.x *= -1
 

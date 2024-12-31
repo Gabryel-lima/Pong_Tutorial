@@ -1,16 +1,16 @@
 from settings import *
 
-from sprite import Player, Ball, Opponent
+from sprite import Player, Ball, Opponent, AiAgent
 from groups import AllSprites
 
 from typing import Callable
 
-def scaled_surface_percent(surf, percentage):
-    """Return a scaled surface based on the percentage."""
-    width, height = surf.get_size()
-    new_width = int(width * percentage / 100)
-    new_height = int(height * percentage / 100)
-    return pygame.transform.scale(surf, (new_width, new_height))
+# def scaled_surface_percent(surf, percentage):
+#     """Return a scaled surface based on the percentage."""
+#     width, height = surf.get_size()
+#     new_width = int(width * percentage / 100)
+#     new_height = int(height * percentage / 100)
+#     return pygame.transform.scale(surf, (new_width, new_height))
 
 class Game:
     def __init__(self):
@@ -20,7 +20,7 @@ class Game:
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
         # scaled surface
-        self.scaled = scaled_surface_percent(self.screen, percentage=10)
+        self.scaled_copy = self.screen.copy()
         
         self.icon = pygame.image.load(join('assets', 'icon.png'))
         pygame.display.set_icon(self.icon)
@@ -41,14 +41,15 @@ class Game:
         # classes
         self.ball = Ball((self.all_sprites), paddle_sprites=self.paddle_sprites, update_score=self.update_score)
         self.player = Player((self.all_sprites, self.paddle_sprites), ball=self.ball)
-        self.opponent = Opponent((self.all_sprites, self.paddle_sprites), ball=self.ball)
+        #self.opponent = Opponent((self.all_sprites, self.paddle_sprites), ball=self.ball)
+        self.ai_agent = AiAgent((self.all_sprites, self.paddle_sprites), ball=self.ball)
 
         # font
         self.font = pygame.Font(None, 60)
 
     def background(self):
         self.screen.fill(COLORS['bg'])
-        #pygame.draw.rect(self.screen, (127, 127, 127), (self.screen.get_frect()), 2) # border
+        pygame.draw.rect(self.screen, (COLORS['bg detail']), (self.screen.get_frect()), 2) # border
 
     def display_score(self):
         # player
@@ -88,6 +89,8 @@ class Game:
 
     def reset_game(self):
         self.load_score(reset=True)
+        # self.player.reset()
+        # self.ai_agent.reset()
 
     def _render_game(self):
         while self.runing:
@@ -107,9 +110,9 @@ class Game:
             # update display
             pygame.display.update()
 
-            # return frame
-            return np.array(pygame.surfarray.array3d(self.scaled), dtype=np.float32)
-        
+            # pos frame
+            return np.array([self.ai_agent.rect.y, self.ball.rect.y], dtype=np.float32)
+
         pygame.quit()
 
     def run(self):
@@ -130,6 +133,7 @@ class Game:
 
             # update display
             pygame.display.update()
+
         pygame.quit()
 
 def main():
