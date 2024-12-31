@@ -1,7 +1,7 @@
 from settings import *
 
-from sprite import Player, Ball, Opponent, AiAgent
-from groups import AllSprites
+from sprite import Ball, Player, Opponent, AiAgent
+from groups import AllSprites, Ball_Group, Paddle_Group, Particules_Group
 
 from typing import Callable
 
@@ -11,6 +11,10 @@ from typing import Callable
 #     new_width = int(width * percentage / 100)
 #     new_height = int(height * percentage / 100)
 #     return pygame.transform.scale(surf, (new_width, new_height))
+
+def get_hex_to_rgb(hex_color: str) -> tuple:
+    """Convert hex color to rgb."""
+    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
 class Game:
     def __init__(self):
@@ -36,15 +40,21 @@ class Game:
 
         # sprites
         self.all_sprites = AllSprites()
-        self.paddle_sprites = pygame.sprite.Group()
+        self.paddle_sprites = Paddle_Group()
+        self.ball_sprites = Ball_Group()
+        self.particules_sprites = Particules_Group()
 
         # classes
-        self.ball = Ball((self.all_sprites), paddle_sprites=self.paddle_sprites, update_score=self.update_score)
+        self.ball = Ball((self.all_sprites, self.ball_sprites), 
+                         paddle_sprites=self.paddle_sprites, 
+                         ball_sprites=self.ball_sprites, 
+                         particules_sprites=self.particules_sprites, update_score=self.update_score)
+        
         self.player = Player((self.all_sprites, self.paddle_sprites), ball=self.ball)
-        #self.opponent = Opponent((self.all_sprites, self.paddle_sprites), ball=self.ball)
+        self.opponent = Opponent((self.all_sprites, self.paddle_sprites), ball=self.ball)
 
         # agent
-        self.agent = AiAgent((self.all_sprites, self.paddle_sprites), ball=self.ball)
+        #self.agent = AiAgent((self.all_sprites, self.paddle_sprites, self.ball_sprites))
 
         # font
         self.font = pygame.Font(None, 60)
@@ -104,10 +114,16 @@ class Game:
             # update
             self.all_sprites.update(dt)
 
+            # particles test
+            self.particules_sprites.update(dt)
+
             # draw
             self.background()
             self.display_score()
             self.all_sprites.draw()
+
+            # particles test
+            self.particules_sprites.draw()
 
             # update display
             pygame.display.update()
@@ -125,13 +141,18 @@ class Game:
                     self.runing = False
                     self.save_score()
 
+                # event
+                self.particules_sprites.handle_event(event)
+
             # update
             self.all_sprites.update(dt)
+            self.particules_sprites.update(dt)
 
             # draw
             self.background()
             self.display_score()
             self.all_sprites.draw()
+            self.particules_sprites.draw()
 
             # update display
             pygame.display.update()

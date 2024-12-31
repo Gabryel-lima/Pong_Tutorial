@@ -3,6 +3,33 @@ from random import choice, uniform
 
 from typing import Callable
 
+class Particles(pygame.sprite.Sprite):
+    def __init__(self, *groups, x, y, radius, color, lifetime=1.0):
+        super().__init__(*groups)
+
+        # attributes
+        self.x, self.y = x, y
+        self.radius = radius
+        self.color = color
+        self.lifetime = lifetime
+
+        # timer
+        self.elapsed_time = 0
+        self.creation_time = pygame.time.get_ticks()
+
+        # image & rect
+        self.image = pygame.Surface((self.radius * 2, self.radius * 2), pygame.SRCALPHA)
+        pygame.draw.circle(self.image, color, (self.radius, self.radius), self.radius)
+        self.rect = self.image.get_frect(center = (x, y))
+
+    def update(self, dt):
+        self.elapsed_time += dt
+        if self.elapsed_time > self.lifetime:
+            self.kill()  # Remove a partícula do grupo
+        else:
+            alpha = int(255 * (1 - self.elapsed_time / self.lifetime))
+            self.image.fill((*self.color[:], alpha), special_flags=pygame.BLEND_RGBA_MULT)
+
 class Paddle(pygame.sprite.Sprite):
     def __init__(self, *groups):
         super().__init__(*groups)
@@ -31,8 +58,8 @@ class Paddle(pygame.sprite.Sprite):
         self.get_direction()
         self.move(dt)
 
-    def reset(self):
-        self.rect.center = POS['player'] or POS['opponent'] or POS['ai']
+    def reset(self, position):
+        self.rect.center = position
 
 class Opponent(Paddle):
     def __init__(self, *groups, ball):
@@ -49,7 +76,7 @@ class Opponent(Paddle):
         self.direction = 1 if self.ball.rect.centery > self.rect.centery else -1
     
     def reset(self):
-        self.rect.center = POS['opponent']
+        super().reset(POS['opponent'])
 
 class AiAgent(Paddle):
     def __init__(self, *groups, ball):
@@ -63,48 +90,55 @@ class AiAgent(Paddle):
         self.rect.center = POS['ai']
 
     def get_direction(self, action=None):
-        if action is not None:
-            self.rect.centery += action * self.speed
-        # else:
-        #     self.rect.centery += 1 if self.ball.rect.centery > self.rect.centery else -1
+        self.rect.centery += action * self.speed
 
     def reset(self):
-        self.rect.center = POS['opponent']
+        super().reset(POS['ai'])
 
 class Player(Paddle):
     def __init__(self, *groups, ball):
         super().__init__(*groups)
 
-        # # rect & movement
-        # self.speed = SPEED['opponent']
-        # self.rect.center = POS['opponent']
-
         # reference
         self.ball = ball
 
     def get_direction(self):
-        # keys = pygame.key.get_pressed()
-        # self.direction = int(keys[pygame.K_DOWN] - keys[pygame.K_UP])
+        keys = pygame.key.get_pressed()
+        self.direction = int(keys[pygame.K_DOWN] - keys[pygame.K_UP])
         # -------------------------------------------------------------- #
 
-        self.direction = 1 if self.ball.rect.centery > self.rect.centery else -1
+        #self.direction = 1 if self.ball.rect.centery > self.rect.centery else -1
     
     def reset(self):
-        self.rect.center = POS['player']
+        super().reset(POS['player'])
 
 class Ball(pygame.sprite.Sprite):
-    def __init__(self, *groups, paddle_sprites, update_score: Callable[[str], None]):
+    def __init__(self, *groups, 
+                 paddle_sprites, 
+                 ball_sprites, 
+                 particules_sprites,
+                 update_score: Callable[[str], None]):
         super().__init__(*groups)
+
+        # references
         self.paddle_sprites = paddle_sprites
+        self.ball_sprite = ball_sprites
+        self.particules_sprites = particules_sprites
         self.update_score = update_score
 
         # image
         self.image = pygame.Surface(SIZE['ball'], pygame.SRCALPHA)
-        pygame.draw.circle(self.image, COLORS['ball'], (SIZE['ball'][0] / 2, SIZE['ball'][1] / 2), SIZE['ball'][0] / 2)
+        pygame.draw.circle(self.image, 
+                           COLORS['ball'], 
+                           (SIZE['ball'][0] / 2, SIZE['ball'][1] / 2), 
+                           SIZE['ball'][0] / 2)
 
         # shadow surf
         self.shadow_surf = self.image.copy()
-        pygame.draw.circle(self.shadow_surf, COLORS['ball shadow'], (SIZE['ball'][0] / 2, SIZE['ball'][1] / 2), SIZE['ball'][0] / 2)
+        pygame.draw.circle(self.shadow_surf, 
+                           COLORS['ball shadow'], 
+                           (SIZE['ball'][0] / 2, SIZE['ball'][1] / 2), 
+                           SIZE['ball'][0] / 2)
 
         # rect & movement
         self.rect = self.image.get_frect(center = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2))
@@ -113,11 +147,24 @@ class Ball(pygame.sprite.Sprite):
 
         # timer
         self.start_time = pygame.time.get_ticks()
-        self.duration = 1200
+        self.duration = 1200 # ms
         self.speed_modifier = 0
 
     def get_distance(self, paddle):
         return abs(self.rect.centerx - paddle.rect.centerx) + abs(self.rect.centery - paddle.rect.centery)
+    
+    def get_radius(self):
+        return int(self.rect.width / 2)
+
+    def _create_particles(self, n):
+        for _ in range(n):
+            offset_x = np.random.randint(-2, 2)
+            offset_y = np.random.randint(-2, 2)
+            Particles(self.particules_sprites, 
+                     x=self.rect.centerx + float(offset_x), 
+                     y=self.rect.centery + float(offset_y),
+                     radius=self.get_radius(),
+                     color=(255, 255, 255), lifetime=0.5)
 
     def move(self, dt):
         self.rect.x += self.direction.x * SPEED['ball'] * dt * self.speed_modifier
@@ -170,7 +217,7 @@ class Ball(pygame.sprite.Sprite):
         #    self.direction.x *= -1
 
     def reset(self):
-        self.rect.center = (WINDOW_WIDTH / 2 + 1, WINDOW_HEIGHT / 2) # +1 ajustar a pos da bolinha na linha
+        self.rect.center = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2) # A pos estava usadndo o tamanho da bola, o que fazia a bola sair um pouco do centro
         self.direction = pygame.Vector2(x=choice((-1, 1)), y=uniform(0.4, 0.8) * choice((1, -1)))
         self.start_time = pygame.time.get_ticks()
 
@@ -183,5 +230,6 @@ class Ball(pygame.sprite.Sprite):
     def update(self, dt):
         self.old_rect = self.rect.copy()
         self.timer()
+        self._create_particles(10)
         self.move(dt)
         self.wall_collision()
