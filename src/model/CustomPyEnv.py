@@ -8,7 +8,7 @@ import numpy as np
 import random
 import pygame
 
-from settings import SPEED
+#from settings import SPEED
 from Pong import Game
 
 class CustomPyEnvironment(PyEnvironment):
@@ -22,7 +22,7 @@ class CustomPyEnvironment(PyEnvironment):
     """
     __metadata__ = {"render_modes": ["human", "rgb_array"], "render_fps": 60} #TODO: Ainda não utilizado
 
-    def __init__(self, render_mode: str = None, seed: int = None):
+    def __init__(self, render_mode: str = "human", seed: int = None):
         super().__init__()
         """
         Inicializa o ambiente personalizado.
@@ -32,6 +32,7 @@ class CustomPyEnvironment(PyEnvironment):
             seed (int, opcional): Define a semente para gerar resultados reprodutíveis.
         """
 
+        # initialize game
         self.game = Game()
         self.render_mode = render_mode
 
@@ -72,7 +73,7 @@ class CustomPyEnvironment(PyEnvironment):
         Returns:
             ts.TimeStep: O estado inicial do ambiente após o reset.
         """
-        self.game.reset_game()
+        #self.render(self.render_mode)
         return self._create_timestep(self.get_obs(), ts.StepType.FIRST, 0.0, 1.0)
 
     def _step(self, action: int) -> ts.TimeStep:
@@ -87,12 +88,11 @@ class CustomPyEnvironment(PyEnvironment):
         """
         self._apply_action(action)
         reward, done = self.calculate_reward(action)
-        obs = self.get_obs()
     
         step_type = ts.StepType.MID if not done else ts.StepType.LAST
         discount = 1.0 if not done else 0.0
     
-        return self._create_timestep(obs, step_type, reward, discount)
+        return self._create_timestep(self.get_obs(), step_type, reward, discount)
 
     def _create_timestep(self, obs, step_type, reward, discount) -> ts.TimeStep:
         """
@@ -121,8 +121,8 @@ class CustomPyEnvironment(PyEnvironment):
         Args:
             action (int): Ação a ser aplicada (-1 - mover para cima, 1 - mover para baixo).
         """
-        self.game.ai_agent.get_direction(action)
-        self.game.ai_agent.move(self.game.clock.tick() / 1000)
+        self.game.agent.get_direction(action)
+        self.game.agent.move(self.game.clock.tick() / 1000)
 
     def calculate_reward(self, action: int) -> tuple[float, bool]:
         """
@@ -137,20 +137,26 @@ class CustomPyEnvironment(PyEnvironment):
         reward = 0.0
         done = False
     
-        if self.game.ball.rect.right < self.game.ai_agent.rect.left:
+        if self.game.ball.rect.right < self.game.agent.rect.left:
             reward -= 5.0
             done = True
+
+        if self.game.ball.rect.left > self.game.player.rect.right:
+            done = True
+
+        if self.game.agent.rect.colliderect(self.game.ball.rect):
+            reward += 1.0
     
-        if self.game.ai_agent.rect.colliderect(self.game.ball.rect):
-            reward += 3.0
-    
-        distance = abs(self.game.ball.rect.centery - self.game.ai_agent.rect.centery)
-        reward += 1.0 / (distance + 1)
-    
+        distance = self.game.ball.get_distance(self.game.agent)
+        scalar = 3e-4 # 0.0003
+        reward += scalar * (10 - distance) if distance < 10 else -scalar * distance
+
         if done:
-            self.game.reset_game()
-            #self.reset()
+            self.reset()
     
+        # TODO: O jogo ainda não irá terminar, se o agente não deixar a bola passar ou o player não deixar a bola passar
+        # TODO: Vou começar a trabalhar no vetor e aimação da bola, e reorganizar o código
+
         return reward, done
 
     def get_obs(self) -> np.ndarray:
@@ -170,12 +176,12 @@ class CustomPyEnvironment(PyEnvironment):
         Args:
             mode (str): Modo de renderização ('human' ou 'rgb_array').
         """
-        if mode == "human":
+        if mode == self.render_mode:
             self.game._render_game()
             pygame.display.update()
     
         elif mode == "rgb_array":
-            return np.array([self.game.ai_agent.rect.y, self.game.ball.rect.y], dtype=np.float32)
+            return np.array([self.game.agent.rect.y, self.game.ball.rect.y], dtype=np.float32)
         
         else:
             self.close()

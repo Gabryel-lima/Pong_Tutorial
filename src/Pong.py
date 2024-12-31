@@ -42,7 +42,9 @@ class Game:
         self.ball = Ball((self.all_sprites), paddle_sprites=self.paddle_sprites, update_score=self.update_score)
         self.player = Player((self.all_sprites, self.paddle_sprites), ball=self.ball)
         #self.opponent = Opponent((self.all_sprites, self.paddle_sprites), ball=self.ball)
-        self.ai_agent = AiAgent((self.all_sprites, self.paddle_sprites), ball=self.ball)
+
+        # agent
+        self.agent = AiAgent((self.all_sprites, self.paddle_sprites), ball=self.ball)
 
         # font
         self.font = pygame.Font(None, 60)
@@ -89,12 +91,12 @@ class Game:
 
     def reset_game(self):
         self.load_score(reset=True)
-        # self.player.reset()
-        # self.ai_agent.reset()
+        self.player.reset()
+        self.agent.reset()
 
     def _render_game(self):
         while self.runing:
-            dt = self.clock.tick(FPS) / 1000 # Divide por 1000 para converter milissegundos em segundos
+            dt = self.clock.tick(FPS) / 1000 # convert to seconds
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.runing = False
@@ -111,7 +113,7 @@ class Game:
             pygame.display.update()
 
             # pos frame
-            return np.array([self.ai_agent.rect.y, self.ball.rect.y], dtype=np.float32)
+            return np.array([self.agent.rect.y, self.ball.rect.y], dtype=np.float32)
 
         pygame.quit()
 

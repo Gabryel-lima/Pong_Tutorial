@@ -117,7 +117,7 @@ class Ball(pygame.sprite.Sprite):
         self.speed_modifier = 0
 
     def get_distance(self, paddle):
-        return self.rect.centerx - paddle.rect.centerx
+        return abs(self.rect.centerx - paddle.rect.centerx) + abs(self.rect.centery - paddle.rect.centery)
 
     def move(self, dt):
         self.rect.x += self.direction.x * SPEED['ball'] * dt * self.speed_modifier

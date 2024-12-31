@@ -51,7 +51,7 @@ class EvolutionaryAgent:
         self.model = None
 
     @classmethod
-    def set_seeds(cls, set_seed=True, seed_np=None, seed_random=None, seed_tf=None) -> tuple:
+    def set_seeds(cls, set_seed=False, seed_np=None, seed_random=None, seed_tf=None) -> tuple:
         """set seeds for numpy, random and tensorflow."""
         if set_seed:
             seed_np = seed_np if seed_np is not None else 42
@@ -76,12 +76,10 @@ class EvolutionaryAgent:
             self.population.append(model)
 
     def _create_model(self):
-        model = keras.Sequential([
+        return keras.Sequential([
             keras.layers.Input(self.input_shape),
             keras.layers.Dense(32, activation='relu'),
-            keras.layers.Dense(self.num_actions, activation='tanh')
-        ])
-        return model
+            keras.layers.Dense(self.num_actions, activation='tanh')])
 
     def _evaluate_individual(self, model) -> np.ndarray:
         # action_values = W₂ * relu(W₁ * state + b₁) + b₂
@@ -116,7 +114,9 @@ class EvolutionaryAgent:
         for i in range(len(child.layers)):
             weights_parent1 = parent1.layers[i].get_weights()
             weights_parent2 = parent2.layers[i].get_weights()
+
             new_weights = []
+
             for w1, w2 in zip(weights_parent1, weights_parent2):
                 mask = np.random.rand(*w1.shape) > 0.5
                 w = np.where(mask, w1, w2)
@@ -131,6 +131,7 @@ class EvolutionaryAgent:
 
         for layer in model.layers:
             weights = layer.get_weights()
+
             new_weights = []
             for w in weights:
                 if np.random.rand() < self.mutation_rate:
@@ -207,16 +208,16 @@ class EvolutionaryAgent:
         plt.xlabel('Geração')
         plt.ylabel('Fitness')
         plt.grid(True)
-        plt.savefig('train')
+        plt.savefig('./train')
 
 if __name__ == "__main__":
     custom_pyenv = CustomPyEnvironment()
     
     evolutionary_agent = EvolutionaryAgent(
         env=custom_pyenv,
-        population_size=10,
-        num_generations=30,
-        mutation_rate=0.8, 
+        population_size=20,
+        num_generations=15,
+        mutation_rate=0.1, 
         elite_fraction=0.2,
         set_seed=False
     )
