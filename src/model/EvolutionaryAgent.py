@@ -211,15 +211,18 @@ class EvolutionaryAgent:
         plt.savefig('./train')
 
 if __name__ == "__main__":
-    custom_pyenv = CustomPyEnvironment()
+    custom_pyenv = CustomPyEnvironment(seed=42)
     
     evolutionary_agent = EvolutionaryAgent(
         env=custom_pyenv,
         population_size=20,
         num_generations=15,
-        mutation_rate=0.1, 
+        mutation_rate=0.2, 
         elite_fraction=0.2,
-        set_seed=False
+        set_seed=True,
+        seed_np=42,
+        seed_random=42,
+        seed_tf=42
     )
     
     evolutionary_agent.train()

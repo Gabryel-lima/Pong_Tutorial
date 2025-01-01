@@ -25,10 +25,10 @@ class Particles(pygame.sprite.Sprite):
     def update(self, dt):
         self.elapsed_time += dt
         if self.elapsed_time > self.lifetime:
-            self.kill()  # Remove a partícula do grupo
+            self.kill()
         else:
             alpha = int(255 * (1 - self.elapsed_time / self.lifetime))
-            self.image.fill((*self.color[:], alpha), special_flags=pygame.BLEND_RGBA_MULT)
+            self.image.fill((*self.color[:3], alpha), special_flags=pygame.BLEND_RGBA_MULT)
 
 class Paddle(pygame.sprite.Sprite):
     def __init__(self, *groups):
@@ -90,7 +90,8 @@ class AiAgent(Paddle):
         self.rect.center = POS['ai']
 
     def get_direction(self, action=None):
-        self.rect.centery += action * self.speed
+        if action is not None:
+            self.rect.centery += action * self.speed
 
     def reset(self):
         super().reset(POS['ai'])
@@ -103,11 +104,11 @@ class Player(Paddle):
         self.ball = ball
 
     def get_direction(self):
-        keys = pygame.key.get_pressed()
-        self.direction = int(keys[pygame.K_DOWN] - keys[pygame.K_UP])
+        # keys = pygame.key.get_pressed()
+        # self.direction = int(keys[pygame.K_DOWN] - keys[pygame.K_UP])
         # -------------------------------------------------------------- #
 
-        #self.direction = 1 if self.ball.rect.centery > self.rect.centery else -1
+        self.direction = 1 if self.ball.rect.centery > self.rect.centery else -1
     
     def reset(self):
         super().reset(POS['player'])
@@ -116,7 +117,7 @@ class Ball(pygame.sprite.Sprite):
     def __init__(self, *groups, 
                  paddle_sprites, 
                  ball_sprites, 
-                 particules_sprites,
+                 particules_sprites: pygame.sprite.Group,
                  update_score: Callable[[str], None]):
         super().__init__(*groups)
 
@@ -155,22 +156,52 @@ class Ball(pygame.sprite.Sprite):
     
     def get_radius(self):
         return int(self.rect.width / 2)
+    
+    def _stage_particles(self):
+        pass
 
-    def _create_particles(self, n):
+    def _create_particles(self):
+        n = 0
+        burn_size = (-2, 2)
+        color = (255, 255, 255)
+        lifetime = 0.5
+
+        speed = self.direction.length()
+        print(speed, end='\r')
+
+        match speed:
+            case s if s < 1.5:
+                n = 0
+            case s if s < 3:
+                n = 3
+                color = (169, 169, 169)  # Cinza
+                burn_size = (-3, 3)
+            case s if s < 4.5:
+                n = 6
+                color = (255, 255, 0)  # Amarelada
+                burn_size = (-4, 4)
+            case _:
+                n = 10
+                color = (255, 165, 0)  # Alaranjada
+                burn_size = (-5, 5)
+
         for _ in range(n):
-            offset_x = np.random.randint(-2, 2)
-            offset_y = np.random.randint(-2, 2)
+            offset_x = float(np.random.randint(*burn_size[:2]))
+            offset_y = float(np.random.randint(*burn_size[:2]))
             Particles(self.particules_sprites, 
-                     x=self.rect.centerx + float(offset_x), 
-                     y=self.rect.centery + float(offset_y),
+                     x=self.rect.centerx + offset_x, 
+                     y=self.rect.centery + offset_y,
                      radius=self.get_radius(),
-                     color=(255, 255, 255), lifetime=0.5)
+                     color=color, lifetime=lifetime)
 
     def move(self, dt):
         self.rect.x += self.direction.x * SPEED['ball'] * dt * self.speed_modifier
         self.collision('horizontal')
-        self.rect.y += self.direction.y * SPEED['ball'] * dt * self.speed_modifier 
+        self.rect.y += self.direction.y * SPEED['ball'] * dt * self.speed_modifier
         self.collision('vertical')
+
+    def gradual_speed(self, scalar=0.1):
+        return 1 + scalar * self.speed_modifier
 
     def collision(self, direction):
         for sprite in self.paddle_sprites:
@@ -178,17 +209,17 @@ class Ball(pygame.sprite.Sprite):
                 if direction == 'horizontal':
                     if self.rect.right >= sprite.rect.left and self.old_rect.right <= sprite.old_rect.left:
                         self.rect.right = sprite.rect.left
-                        self.direction.x *= -1
+                        self.direction.x *= -1 * self.gradual_speed()
                     if self.rect.left <= sprite.rect.right and self.old_rect.left >= sprite.old_rect.right:
                         self.rect.left = sprite.rect.right
-                        self.direction.x *= -1
+                        self.direction.x *= -1 * self.gradual_speed()
                 else:
                     if self.rect.bottom >= sprite.rect.top and self.old_rect.bottom <= sprite.old_rect.top:
                         self.rect.bottom = sprite.rect.top
-                        self.direction.y *= -1
+                        self.direction.y *= -1 * self.gradual_speed()
                     if self.rect.top <= sprite.rect.bottom and self.old_rect.top >= sprite.old_rect.bottom:
                         self.rect.top = sprite.rect.bottom
-                        self.direction.y *= -1
+                        self.direction.y *= -1 * self.gradual_speed()
 
     def wall_collision(self):
         # top
@@ -230,6 +261,6 @@ class Ball(pygame.sprite.Sprite):
     def update(self, dt):
         self.old_rect = self.rect.copy()
         self.timer()
-        self._create_particles(10)
+        self._create_particles()
         self.move(dt)
         self.wall_collision()

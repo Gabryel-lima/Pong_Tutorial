@@ -51,10 +51,10 @@ class Game:
                          particules_sprites=self.particules_sprites, update_score=self.update_score)
         
         self.player = Player((self.all_sprites, self.paddle_sprites), ball=self.ball)
-        self.opponent = Opponent((self.all_sprites, self.paddle_sprites), ball=self.ball)
+        #self.opponent = Opponent((self.all_sprites, self.paddle_sprites), ball=self.ball)
 
         # agent
-        #self.agent = AiAgent((self.all_sprites, self.paddle_sprites, self.ball_sprites))
+        self.agent = AiAgent((self.all_sprites, self.paddle_sprites), ball=self.ball_sprites)
 
         # font
         self.font = pygame.Font(None, 60)
