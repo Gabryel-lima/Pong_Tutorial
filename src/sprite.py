@@ -104,19 +104,19 @@ class Player(Paddle):
         self.ball = ball
 
     def get_direction(self):
-        # keys = pygame.key.get_pressed()
-        # self.direction = int(keys[pygame.K_DOWN] - keys[pygame.K_UP])
+        keys = pygame.key.get_pressed()
+        self.direction = int(keys[pygame.K_DOWN] - keys[pygame.K_UP])
         # -------------------------------------------------------------- #
 
-        self.direction = 1 if self.ball.rect.centery > self.rect.centery else -1
+        #self.direction = 1 if self.ball.rect.centery > self.rect.centery else -1
     
     def reset(self):
         super().reset(POS['player'])
 
 class Ball(pygame.sprite.Sprite):
     def __init__(self, *groups, 
-                 paddle_sprites, 
-                 ball_sprites, 
+                 paddle_sprites: pygame.sprite.Group, 
+                 ball_sprites: pygame.sprite.Group, 
                  particules_sprites: pygame.sprite.Group,
                  update_score: Callable[[str], None]):
         super().__init__(*groups)
@@ -156,34 +156,21 @@ class Ball(pygame.sprite.Sprite):
     
     def get_radius(self):
         return int(self.rect.width / 2)
-    
-    def _stage_particles(self):
-        pass
+
+    def _get_particle_stages(self, speed):
+        if speed <= 1.3:
+            return 0, (0, 0, 0), (0, 0), 0.0
+        elif speed <= 1.5:
+            return 3, (169, 169, 169), (-3, 3), 0.2
+        elif speed <= 1.8:
+            return 6, (200, 200, 0), (-4, 4), 0.3
+        else:
+            return 15, (255, 100, 0), (-5, 5), 0.4
 
     def _create_particles(self):
-        n = 0
-        burn_size = (-2, 2)
-        color = (255, 255, 255)
-        lifetime = 0.5
-
         speed = self.direction.length()
         print(speed, end='\r')
-
-        match speed:
-            case s if s < 1.5:
-                n = 0
-            case s if s < 3:
-                n = 3
-                color = (169, 169, 169)  # Cinza
-                burn_size = (-3, 3)
-            case s if s < 4.5:
-                n = 6
-                color = (255, 255, 0)  # Amarelada
-                burn_size = (-4, 4)
-            case _:
-                n = 10
-                color = (255, 165, 0)  # Alaranjada
-                burn_size = (-5, 5)
+        n, color, burn_size, lifetime = self._get_particle_stages(speed)
 
         for _ in range(n):
             offset_x = float(np.random.randint(*burn_size[:2]))
@@ -249,7 +236,7 @@ class Ball(pygame.sprite.Sprite):
 
     def reset(self):
         self.rect.center = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2) # A pos estava usadndo o tamanho da bola, o que fazia a bola sair um pouco do centro
-        self.direction = pygame.Vector2(x=choice((-1, 1)), y=uniform(0.4, 0.8) * choice((1, -1)))
+        self.direction = pygame.Vector2(x=choice((-1, 1)), y=uniform(0.4, 0.8) * choice((1, -1))).normalize()
         self.start_time = pygame.time.get_ticks()
 
     def timer(self):
