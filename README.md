@@ -13,6 +13,9 @@ Este projeto é um tutorial de como criar um jogo de Pong utilizando Python e Py
 
 Para instalar as dependências, execute:
 ### $ Recomendo utilizar o python3.11.9 por conta do tensorflow
+### $ Se você não tiver gpu Nvidea ou sem instrução AVX2. Para o tensorflow-cpu. 
+
+### $ Vou deixar o modelo pré-treinado do tflitle, e mais para frente vou trazer a versão sem dependência da lib. TODO
 
 ```bash
 pip install -r requirements.txt
