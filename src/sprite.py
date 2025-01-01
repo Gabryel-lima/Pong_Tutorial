@@ -162,7 +162,7 @@ class Ball(pygame.sprite.Sprite):
             return 0, (0, 0, 0), (0, 0), 0.0
         elif speed <= 1.5:
             return 3, (169, 169, 169), (-3, 3), 0.2
-        elif speed <= 1.8:
+        elif speed <= 2.2:
             return 6, (200, 200, 0), (-4, 4), 0.3
         else:
             return 15, (255, 100, 0), (-5, 5), 0.4
