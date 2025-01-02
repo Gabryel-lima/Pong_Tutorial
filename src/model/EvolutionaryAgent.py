@@ -50,13 +50,13 @@ class EvolutionaryAgent:
         self._initialize_population()
         self.model = None
 
-    @classmethod
-    def set_seeds(cls, set_seed=False, seed_np=None, seed_random=None, seed_tf=None) -> tuple:
+    @staticmethod
+    def set_seeds(set_seed=False, seed_np=None, seed_random=None, seed_tf=None) -> tuple:
         """set seeds for numpy, random and tensorflow."""
         if set_seed:
-            seed_np = seed_np if seed_np is not None else 42
-            seed_random = seed_random if seed_random is not None else 42
-            seed_tf = seed_tf if seed_tf is not None else 42
+            seed_np = seed_np or 42
+            seed_random = seed_random or 42
+            seed_tf = seed_tf or 42
         else:
             seed_np = np.random.randint(1, 1e+6)
             seed_random = np.random.randint(1, 1e+6)
@@ -215,7 +215,7 @@ if __name__ == "__main__":
     
     evolutionary_agent = EvolutionaryAgent(
         env=custom_pyenv,
-        population_size=20,
+        population_size=50,
         num_generations=15,
         mutation_rate=0.2, 
         elite_fraction=0.2,

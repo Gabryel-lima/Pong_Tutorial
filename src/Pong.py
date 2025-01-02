@@ -120,10 +120,10 @@ class Game:
             # draw
             self.background()
             self.display_score()
-            self.all_sprites.draw()
 
             # particles test
             self.particules_sprites.draw()
+            self.all_sprites.draw()
 
             # update display
             pygame.display.update()
@@ -142,7 +142,7 @@ class Game:
                     self.save_score()
 
                 # event
-                self.particules_sprites.handle_event(event)
+                # //pass
 
             # update
             self.all_sprites.update(dt)
@@ -151,8 +151,8 @@ class Game:
             # draw
             self.background()
             self.display_score()
-            self.all_sprites.draw()
             self.particules_sprites.draw()
+            self.all_sprites.draw()
 
             # update display
             pygame.display.update()

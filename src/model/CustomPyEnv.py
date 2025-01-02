@@ -34,6 +34,8 @@ class CustomPyEnvironment(PyEnvironment):
 
         # initialize game
         self.game = Game()
+
+        # render mode
         self.render_mode = render_mode
 
         # define action space
@@ -45,6 +47,10 @@ class CustomPyEnvironment(PyEnvironment):
             dtype=np.float32, minimum=0.0, maximum=1.0, name="observation"
         )
 
+        # total reward
+        self.total_reward = 0.0
+
+        # seed
         self.seed(seed) if seed is not None else np.random.randint(1, 1e+6)
             
     def seed(self, seed: int) -> None:
@@ -73,7 +79,7 @@ class CustomPyEnvironment(PyEnvironment):
         Returns:
             ts.TimeStep: O estado inicial do ambiente após o reset.
         """
-        #self.render(self.render_mode)
+        self.game.reset_game()
         return self._create_timestep(self.get_obs(), ts.StepType.FIRST, 0.0, 1.0)
 
     def _step(self, action: int) -> ts.TimeStep:
@@ -136,7 +142,7 @@ class CustomPyEnvironment(PyEnvironment):
         """
         reward = 0.0
         done = False
-    
+
         if self.game.ball.rect.right < self.game.agent.rect.left:
             reward -= 5.0
             done = True
@@ -147,15 +153,16 @@ class CustomPyEnvironment(PyEnvironment):
         if self.game.agent.rect.colliderect(self.game.ball.rect):
             reward += 1.0
     
-        distance = self.game.ball.get_distance(self.game.agent)
-        scalar = 3e-4 # 0.0003
-        reward += scalar * (10 - distance) if distance < 10 else -scalar * distance
+        # distance = self.game.ball.get_distance(self.game.agent)
+        # scalar = 3e-4 # 0.0003
+        # reward += scalar * (10 - distance) if distance < 10 else -scalar * distance
 
+        # Reseta o jogo se o episódio terminou
         if done:
+            self.game.reset_game()
             self.reset()
-    
-        # TODO: O jogo ainda não irá terminar, se o agente não deixar a bola passar ou o player não deixar a bola passar
-        # TODO: Vou começar a trabalhar no vetor e aimação da bola, e reorganizar o código
+
+        print(f'{reward:.6f}', end='\r')
 
         return reward, done
 

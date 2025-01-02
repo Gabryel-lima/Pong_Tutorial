@@ -2,6 +2,14 @@ from settings import *
 from random import choice, uniform
 
 from typing import Callable
+from dataclasses import dataclass
+
+@dataclass
+class ParticleStages:
+    count: int
+    color: tuple
+    burn_size: tuple
+    lifetime: float
 
 class Particles(pygame.sprite.Sprite):
     def __init__(self, *groups, x, y, radius, color, lifetime=1.0):
@@ -104,11 +112,11 @@ class Player(Paddle):
         self.ball = ball
 
     def get_direction(self):
-        keys = pygame.key.get_pressed()
-        self.direction = int(keys[pygame.K_DOWN] - keys[pygame.K_UP])
+        # keys = pygame.key.get_pressed()
+        # self.direction = int(keys[pygame.K_DOWN] - keys[pygame.K_UP])
         # -------------------------------------------------------------- #
 
-        #self.direction = 1 if self.ball.rect.centery > self.rect.centery else -1
+        self.direction = 1 if self.ball.rect.centery > self.rect.centery else -1
     
     def reset(self):
         super().reset(POS['player'])
@@ -120,6 +128,8 @@ class Ball(pygame.sprite.Sprite):
                  particules_sprites: pygame.sprite.Group,
                  update_score: Callable[[str], None]):
         super().__init__(*groups)
+
+        # TODO: Tentar entender porque que o sprite da bola parece estar piscando
 
         # references
         self.paddle_sprites = paddle_sprites
@@ -151,35 +161,41 @@ class Ball(pygame.sprite.Sprite):
         self.duration = 1200 # ms
         self.speed_modifier = 0
 
-    def get_distance(self, paddle):
-        return abs(self.rect.centerx - paddle.rect.centerx) + abs(self.rect.centery - paddle.rect.centery)
-    
-    def get_radius(self):
-        return int(self.rect.width / 2)
+        # particle stages
+        self.particle_stages = [
+            (1.3, ParticleStages(0, (0, 0, 0), (0, 0), 0.0)),
+            (1.8, ParticleStages(3, (170, 170, 170), (-3, 3), 0.2)),
+            (2.4, ParticleStages(6, (210, 210, 0), (-4, 4), 0.3)),
+            (float("inf"), ParticleStages(15, (255, 100, 0), (-5, 5), 0.4))
+        ]
 
-    def _get_particle_stages(self, speed):
-        if speed <= 1.3:
-            return 0, (0, 0, 0), (0, 0), 0.0
-        elif speed <= 1.5:
-            return 3, (169, 169, 169), (-3, 3), 0.2
-        elif speed <= 2.2:
-            return 6, (200, 200, 0), (-4, 4), 0.3
-        else:
-            return 15, (255, 100, 0), (-5, 5), 0.4
+    def _get_particle_stage(self, speed):
+        for threshold, stage in self.particle_stages:
+            if speed <= threshold:
+                return stage
+        return self.particle_stages[-1][1]
 
     def _create_particles(self):
         speed = self.direction.length()
-        print(speed, end='\r')
-        n, color, burn_size, lifetime = self._get_particle_stages(speed)
+        stage = self._get_particle_stage(speed)
 
-        for _ in range(n):
-            offset_x = float(np.random.randint(*burn_size[:2]))
-            offset_y = float(np.random.randint(*burn_size[:2]))
-            Particles(self.particules_sprites, 
-                     x=self.rect.centerx + offset_x, 
-                     y=self.rect.centery + offset_y,
-                     radius=self.get_radius(),
-                     color=color, lifetime=lifetime)
+        for _ in range(stage.count):
+            offset_x = np.random.randint(*stage.burn_size)
+            offset_y = np.random.randint(*stage.burn_size)
+            Particles(
+                self.particules_sprites,
+                x=self.rect.centerx + offset_x,
+                y=self.rect.centery + offset_y,
+                radius=self.get_radius(),
+                color=stage.color,
+                lifetime=stage.lifetime
+            )
+
+    def get_distance(self, paddle):
+        return abs(self.rect.centery - paddle.rect.centery) + abs(self.rect.centerx - paddle.rect.centerx)
+    
+    def get_radius(self):
+        return int(self.rect.width / 2)
 
     def move(self, dt):
         self.rect.x += self.direction.x * SPEED['ball'] * dt * self.speed_modifier

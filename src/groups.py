@@ -42,14 +42,4 @@ class Particules_Group(pygame.sprite.Group):
             self.screen.blit(sprite.image, sprite.rect)
 
     def handle_event(self, event):
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                self.space_pressed = True  # Inicia a criação de partículas
-
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_SPACE:
-                self.space_pressed = False  # Para a criação de partículas
-
-        if self.space_pressed:
-            self.empty()
-
+        pass
