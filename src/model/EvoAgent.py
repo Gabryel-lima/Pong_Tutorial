@@ -4,8 +4,8 @@ import tensorflow as tf
 import numpy as np
 import random
 
-import sys
-import os
+# import sys
+# import os
 
 from tf_agents.specs import BoundedArraySpec
 from tf_agents.environments.py_environment import PyEnvironment
@@ -13,14 +13,11 @@ from tf_agents.trajectories import time_step as ts
 
 import matplotlib.pyplot as plt
 
-# from Pong import Game
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from CustomPyEnv import CustomPyEnvironment
+from model.Visualizer import Visualizer
 
 
-class EvolutionaryAgent:
-    def __init__(self, env: CustomPyEnvironment, population_size: int = 50, num_generations: int = 100, 
+class EvoAgent:
+    def __init__(self, env, population_size: int = 50, num_generations: int = 100, 
                  mutation_rate: float = 0.1, elite_fraction: float = 0.2, set_seed: bool = True,
                  seed_np: int = None, seed_random: int = None, seed_tf: int = None):
         
@@ -30,6 +27,7 @@ class EvolutionaryAgent:
 
         # environment
         self.env = env
+        self.visualizer = Visualizer()
 
         # genetic algorithm
         self.population_size = population_size
@@ -40,6 +38,8 @@ class EvolutionaryAgent:
         # model
         self.input_shape = self.env.observation_spec().shape
         self.num_actions = self.env.action_spec().maximum - self.env.action_spec().minimum + 1
+        
+        # metrics
         self.population = []
         self.fitness_history = []
         
@@ -47,7 +47,7 @@ class EvolutionaryAgent:
         self.seed_np, self.seed_random, self.seed_tf = self.set_seeds(set_seed, seed_np, seed_random, seed_tf)
         
         # initialize population
-        self._initialize_population()
+        self.init_population()
         self.model = None
 
     @staticmethod
@@ -67,21 +67,30 @@ class EvolutionaryAgent:
         tf.random.set_seed(seed_tf)
 
         return seed_np, seed_random, seed_tf
+    
+    def visualize_individual(self, screen, model):
+        if model is not None:
+            self.visualizer.update()
+            self.visualizer.draw_network(screen, model)
 
-    def _initialize_population(self) -> None:
+    def get_best_individual(self):
+        self.population.sort()
+        return self.population[0]
+        
+    def init_population(self) -> None:
         # y = ⨍(Wⅹ + b)
 
         for _ in range(self.population_size):
-            model = self._create_model()
-            self.population.append(model)
+            self.model = self.create_model()
+            self.population.append(self.model)
 
-    def _create_model(self):
+    def create_model(self):
         return keras.Sequential([
             keras.layers.Input(self.input_shape),
-            keras.layers.Dense(32, activation='relu'),
+            #keras.layers.Dense(3, activation='relu'),
             keras.layers.Dense(self.num_actions, activation='tanh')])
 
-    def _evaluate_individual(self, model) -> np.ndarray:
+    def get_individual(self, model) -> np.ndarray:
         # action_values = W₂ * relu(W₁ * state + b₁) + b₂
 
         total_reward = 0
@@ -91,13 +100,13 @@ class EvolutionaryAgent:
             state = time_step.observation
             action_values = model(np.expand_dims(state, axis=0), training=False)
             action_idx = int(np.argmax(action_values.numpy()[0]))
-            action = action_idx - 1 # [0, 1] -> [-1, 0, 1]
+            action = action_idx - 1 # [0, 1, 2] -> [-1, 0, 1]
             time_step = self.env.step(action)
             total_reward += time_step.reward
 
         return total_reward
 
-    def _select_elite(self, fitnesses: np.ndarray) -> list:
+    def get_elite(self, fitnesses: np.ndarray) -> list:
         # elite_indices = np.argsort(fitnesses)[-num_elite:]
 
         num_elite = max(1, int(self.elite_fraction * self.population_size))
@@ -105,11 +114,11 @@ class EvolutionaryAgent:
         elite = [self.population[i] for i in elite_indices]
         return elite
 
-    def _crossover(self, parent1: list, parent2: list) -> keras.Sequential:
+    def crossover(self, parent1: list, parent2: list) -> keras.Sequential:
         # chield = parent1 * mask + parent2 * (1 - mask)
         # w = np.where(mask, w1, w2)
 
-        child = self._create_model()
+        child = self.create_model()
         
         for i in range(len(child.layers)):
             weights_parent1 = parent1.layers[i].get_weights()
@@ -125,7 +134,7 @@ class EvolutionaryAgent:
 
         return child
 
-    def _mutate(self, model) -> None:
+    def mutate(self, model) -> None:
         # W' = W + N(0, 0.1)
         # w += np.random.normal(0, 0.1, size=w.shape)
 
@@ -149,8 +158,9 @@ class EvolutionaryAgent:
             fitnesses = []
 
             for individual in self.population:
-                fitness = self._evaluate_individual(individual)
+                fitness = self.get_individual(individual)
                 fitnesses.append(fitness)
+                self.visualize_individual(self.env.game.screen, individual)
 
             max_fitness = np.max(fitnesses)
             avg_fitness = np.mean(fitnesses)
@@ -165,12 +175,12 @@ class EvolutionaryAgent:
 
                 print(f"Novo melhor modelo encontrado com fitness: {best_fitness_overall:.2f}")
 
-            elite = self._select_elite(fitnesses)
+            elite = self.get_elite(fitnesses)
             new_population = elite.copy()
             while len(new_population) < self.population_size:
                 parents = random.sample(elite, 2)
-                child = self._crossover(parents[0], parents[1])
-                self._mutate(child)
+                child = self.crossover(parents[0], parents[1])
+                self.mutate(child)
                 new_population.append(child)
             self.population = new_population
 
@@ -180,7 +190,7 @@ class EvolutionaryAgent:
             return
         
         best_individual = self.model
-        fitness = self._evaluate_individual(best_individual)
+        fitness = self.get_individual(best_individual)
         print(f"Melhor Fitness: {fitness:.2f}")
 
     def save_best_model(self, filepath: str) -> None:
@@ -209,27 +219,3 @@ class EvolutionaryAgent:
         plt.ylabel('Fitness')
         plt.grid(True)
         plt.savefig('./train')
-
-if __name__ == "__main__":
-    custom_pyenv = CustomPyEnvironment(seed=42)
-    
-    evolutionary_agent = EvolutionaryAgent(
-        env=custom_pyenv,
-        population_size=50,
-        num_generations=15,
-        mutation_rate=0.2, 
-        elite_fraction=0.2,
-        set_seed=True,
-        seed_np=42,
-        seed_random=42,
-        seed_tf=42
-    )
-    
-    evolutionary_agent.train()
-    evolutionary_agent.evaluate_best()
-
-    evolutionary_agent.save_best_model('src/model/best_model.keras')
-    evolutionary_agent.save_best_model_tflite('src/model/best_model.tflite')
-
-    evolutionary_agent.plot_fitness()
-

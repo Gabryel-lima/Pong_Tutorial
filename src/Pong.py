@@ -1,20 +1,13 @@
 from settings import *
 
-from sprite import Ball, Player, Opponent, AiAgent
+from sprite import Ball, Player, Opponent, Agent
 from groups import AllSprites, Ball_Group, Paddle_Group, Particules_Group
 
 from typing import Callable
 
-# def scaled_surface_percent(surf, percentage):
-#     """Return a scaled surface based on the percentage."""
-#     width, height = surf.get_size()
-#     new_width = int(width * percentage / 100)
-#     new_height = int(height * percentage / 100)
-#     return pygame.transform.scale(surf, (new_width, new_height))
+from model.EvoAgent import EvoAgent
+from model.CustomPyEnv import CustomPyEnvironment
 
-def get_hex_to_rgb(hex_color: str) -> tuple:
-    """Convert hex color to rgb."""
-    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
 class Game:
     def __init__(self):
@@ -23,9 +16,7 @@ class Game:
         # display
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
-        # scaled surface
-        self.scaled_copy = self.screen.copy()
-        
+        # icon
         self.icon = pygame.image.load(join('assets', 'icon.png'))
         pygame.display.set_icon(self.icon)
         pygame.display.set_caption('Pong_Tutorial')
@@ -51,10 +42,21 @@ class Game:
                          particules_sprites=self.particules_sprites, update_score=self.update_score)
         
         self.player = Player((self.all_sprites, self.paddle_sprites), ball=self.ball)
-        self.opponent = Opponent((self.all_sprites, self.paddle_sprites), ball=self.ball)
+        #self.opponent = Opponent((self.all_sprites, self.paddle_sprites), ball=self.ball)
 
         # agent
-        #self.agent = AiAgent((self.all_sprites, self.paddle_sprites), ball=self.ball_sprites)
+        self.agent = Agent((self.all_sprites, self.paddle_sprites), ball=self.ball_sprites)
+        self.evo_agent = EvoAgent(
+                env=CustomPyEnvironment(game=self, seed=42),
+                population_size=10,
+                num_generations=15,
+                mutation_rate=0.2, 
+                elite_fraction=0.2,
+                set_seed=True,
+                seed_np=42,
+                seed_random=42,
+                seed_tf=42
+            )
 
         # font
         self.font = pygame.Font(None, 60)
@@ -125,6 +127,10 @@ class Game:
             self.particules_sprites.draw()
             self.all_sprites.draw()
 
+            # visualize the best individual
+            best_individual = self.evo_agent.get_best_individual()
+            self.evo_agent.visualize_individual(self.screen, best_individual)
+
             # update display
             pygame.display.update()
 
@@ -159,8 +165,19 @@ class Game:
 
         pygame.quit()
 
+def main_model():
+    game = Game()
+    game.evo_agent.train()
+    game.evo_agent.evaluate_best()
+
+    game.evo_agent.save_best_model('src/model/best_model.keras')
+    game.evo_agent.save_best_model_tflite('src/model/best_model.tflite')
+
+    game.evo_agent.plot_fitness()
+
 def main():
-    Game().run()
+    #Game().run()
+    main_model()
 
 if __name__ == '__main__':
     main()

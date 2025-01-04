@@ -8,8 +8,6 @@ import numpy as np
 import random
 import pygame
 
-#from settings import SPEED
-from Pong import Game
 
 class CustomPyEnvironment(PyEnvironment):
     """
@@ -22,18 +20,19 @@ class CustomPyEnvironment(PyEnvironment):
     """
     __metadata__ = {"render_modes": ["human", "rgb_array"], "render_fps": 60} #TODO: Ainda não utilizado
 
-    def __init__(self, render_mode: str = "human", seed: int = None):
+    def __init__(self, game, render_mode: str = "human", seed: int = None):
         super().__init__()
         """
         Inicializa o ambiente personalizado.
 
         Args:
+            game (Game): Instância do jogo que contém a lógica principal.
             render_mode (str, opcional): Define como o jogo deve ser renderizado ('human' ou 'rgb_array').
             seed (int, opcional): Define a semente para gerar resultados reprodutíveis.
         """
 
         # initialize game
-        self.game = Game()
+        self.game = game
 
         # render mode
         self.render_mode = render_mode
@@ -142,28 +141,32 @@ class CustomPyEnvironment(PyEnvironment):
         """
         reward = 0.0
         done = False
-
+    
+        # Penalidade se a bola passa pelo agente
         if self.game.ball.rect.right < self.game.agent.rect.left:
             reward -= 5.0
             done = True
-
+    
+        # Penalidade se a bola passa pelo jogador
         if self.game.ball.rect.left > self.game.player.rect.right:
+            reward -= 5.0
             done = True
-
+    
+        # Recompensa se o agente colide com a bola
         if self.game.agent.rect.colliderect(self.game.ball.rect):
             reward += 1.0
     
-        # distance = self.game.ball.get_distance(self.game.agent)
-        # scalar = 3e-4 # 0.0003
-        # reward += scalar * (10 - distance) if distance < 10 else -scalar * distance
-
+        # Recompensa baseada na distância entre a bola e o agente
+        distance = self.game.ball.get_distance(self.game.agent)
+        scalar = 3e-4  # 0.0003
+        reward += scalar * (10 - distance) if distance < 10 else -scalar * distance
+    
         # Reseta o jogo se o episódio terminou
         if done:
             self.game.reset_game()
-            self.reset()
-
-        print(f'{reward:.6f}', end='\r')
-
+    
+        # print(f'{reward:.6f}', end='\r')
+    
         return reward, done
 
     def get_obs(self) -> np.ndarray:

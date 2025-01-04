@@ -86,7 +86,7 @@ class Opponent(Paddle):
     def reset(self):
         super().reset(POS['opponent'])
 
-class AiAgent(Paddle):
+class Agent(Paddle):
     def __init__(self, *groups, ball):
         super().__init__(*groups)
 

@@ -1,80 +1,73 @@
 import pygame
 import numpy as np
+from model.utils import lerp, get_rgba, draw_dashed_line
 
 class Visualizer:
-    def __init__(self, node_radius=20, node_color=(0, 0, 255), 
-                 pos_color=(0, 255, 0), neg_color=(255, 0, 0), 
-                 margin=50):
-        """
-        Inicializa o visualizador com parâmetros configuráveis. TODO: Ainda falta configurar melhor a classe.
-        """
+    def __init__(self):
         self.dash_offset = 0
-        self.node_radius = node_radius
-        self.node_color = node_color
-        self.pos_color = pos_color
-        self.neg_color = neg_color
-        self.margin = margin
 
-    def update(self, dt):
-        """
-        Atualiza o estado do visualizador, como o deslocamento do traço.
-        """
-        self.dash_offset += 0.05 * dt
-        if self.dash_offset >= 1:
-            self.dash_offset = 0
+    def update(self):
+        self.dash_offset = (self.dash_offset + 0.05) % 1  # Speed of the dash movement
 
-    def draw_network(self, screen, weights):
-        """
-        Desenha a rede neural na tela.
-        """
-        screen_width, screen_height = screen.get_size()
-        num_layers = len(weights)
-        layer_height = screen_height / (num_layers + 1)
-
-        for i, layer_weights in enumerate(weights):
-            num_nodes_in = layer_weights[0].shape[0]
-            num_nodes_out = layer_weights[0].shape[1]
-            node_spacing_in = screen_width / (num_nodes_in + 1)
-            node_spacing_out = screen_width / (num_nodes_out + 1)
-
-            for j in range(num_nodes_in):
-                x_in = (j + 1) * node_spacing_in
-                y_in = (i + 1) * layer_height
-                pygame.draw.circle(screen, self.node_color, (int(x_in), int(y_in)), self.node_radius)
-
-                for k in range(num_nodes_out):
-                    x_out = (k + 1) * node_spacing_out
-                    y_out = (i + 2) * layer_height
-                    weight = layer_weights[0][j][k]
-                    color = self.pos_color if weight > 0 else self.neg_color
-                    pygame.draw.line(screen, color, (int(x_in), int(y_in)), (int(x_out), int(y_out)), 1)
-
-            for k in range(num_nodes_out):
-                x_out = (k + 1) * node_spacing_out
-                y_out = (i + 2) * layer_height
-                pygame.draw.circle(screen, self.node_color, (int(x_out), int(y_out)), self.node_radius)
-
-    def draw_level(self, screen, level, left, top, width, height):
-        """
-        Desenha um nível da rede neural.
-        """
-        right = left + width
-        bottom = top + height
-        node_spacing = width / (len(level.outputs) + 1)
+    def draw_network(self, screen, model):
+        margin = 50
+        left, top = margin, margin
+        width, height = screen.get_width() - margin * 2, screen.get_height() - margin * 2
+        level_height = height / len(model.layers)
         
-        # Desenhar conexões
-        for i, input_value in enumerate(level.inputs):
-            for j, output_value in enumerate(level.outputs):
-                start_pos = (left + (i + 1) * node_spacing, top + height / 2)
-                end_pos = (left + (j + 1) * node_spacing, bottom - height / 2)
-                color = self.pos_color if level.weights[i][j] > 0 else self.neg_color
-                pygame.draw.line(screen, color, start_pos, end_pos, 2)
-        
-        # Desenhar nós
-        for i, input_value in enumerate(level.inputs):
-            pos = (left + (i + 1) * node_spacing, top + height / 2)
-            pygame.draw.circle(screen, self.node_color, pos, self.node_radius)
-        
-        for j, output_value in enumerate(level.outputs):
-            pos = (left + (j + 1) * node_spacing, bottom - height / 2)
-            pygame.draw.circle(screen, self.node_color, pos, self.node_radius)
+        for i in range(len(model.layers) - 1, -1, -1):
+            level_top = top + lerp(height - level_height, 0, 0.5 if len(model.layers) == 1 else i / (len(model.layers) - 1))
+            output_labels = ['↑', '•', '↓'] if i == len(model.layers) - 1 else []
+            self.draw_level(screen, model.layers[i], left, level_top, width, level_height, output_labels)
+
+    def draw_level(self, screen, layer, left, top, width, height, output_labels):
+        right, bottom = width + left, height + top
+
+        try:
+            weights, biases = layer.get_weights()
+        except ValueError:
+            return  # Ignore layers without weights (e.g., Dropout)
+
+        inputs, outputs = weights.shape[0], weights.shape[1]
+        self.draw_connections(screen, weights, inputs, outputs, left, right, top, bottom)
+        self.draw_nodes(screen, inputs, outputs, weights, biases, left, right, top, bottom, output_labels)
+
+        pygame.display.update()
+
+    def draw_connections(self, screen, weights, inputs, outputs, left, right, top, bottom):
+        for i in range(inputs):
+            for j in range(outputs):
+                start_pos = self.get_node_x(inputs, i, left, right), bottom
+                end_pos = self.get_node_x(outputs, j, left, right), top
+                color = get_rgba(weights[i][j])
+                draw_dashed_line(screen, color, start_pos, end_pos, 2, 10, self.dash_offset)
+
+    def draw_nodes(self, screen, inputs, outputs, weights, biases, left, right, top, bottom, output_labels):
+        node_radius, shadow_offset = 32, 4
+
+        for i in range(inputs):
+            x = self.get_node_x(inputs, i, left, right)
+            self.draw_node(screen, x, bottom, node_radius, shadow_offset, get_rgba(weights[i][0])[:3])
+
+        for i in range(outputs):
+            x = self.get_node_x(outputs, i, left, right)
+            self.draw_node(screen, x, top, node_radius, shadow_offset, get_rgba(weights[0][i])[:3], get_rgba(biases[i])[:3])
+            if output_labels and output_labels[i]:
+                self.draw_label(screen, output_labels[i], x, top, node_radius)
+
+    def draw_node(self, screen, x, y, radius, shadow_offset, color, border_color=None):
+        pygame.draw.circle(screen, (0, 33, 48), (x + shadow_offset, y + shadow_offset), radius) # shadow
+        pygame.draw.circle(screen, (0, 0, 0), (x, y), radius) # node
+        pygame.draw.circle(screen, color, (x, y), int(radius * 0.6)) # activation
+        if border_color:
+            pygame.draw.circle(screen, border_color, (x, y), int(radius * 0.8), 2) # border
+
+    def draw_label(self, screen, label, x, y, radius):
+        font = pygame.font.SysFont('Calibri', int(radius))
+        text_surface = font.render(label, True, (206, 17, 38))
+        text_rect = text_surface.get_rect(center = (x, y))
+        screen.blit(text_surface, text_rect)
+
+    @staticmethod
+    def get_node_x(nodes, index, left, right):
+        return lerp(left, right, 0.5 if nodes == 1 else index / (nodes - 1))
