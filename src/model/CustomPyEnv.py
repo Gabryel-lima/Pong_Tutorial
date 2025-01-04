@@ -143,18 +143,18 @@ class CustomPyEnvironment(PyEnvironment):
         done = False
     
         # Penalidade se a bola passa pelo agente
-        if self.game.ball.rect.right < self.game.agent.rect.left:
-            reward -= 5.0
-            done = True
+        # if self.game.ball.rect.right < self.game.agent.rect.left:
+        #     reward -= 5.0
+        #     done = True
     
-        # Penalidade se a bola passa pelo jogador
+        # Recompensa se a bola passa pelo jogador
         if self.game.ball.rect.left > self.game.player.rect.right:
-            reward -= 5.0
+            reward += 5.0
             done = True
     
         # Recompensa se o agente colide com a bola
         if self.game.agent.rect.colliderect(self.game.ball.rect):
-            reward += 1.0
+            reward += 5.0
     
         # Recompensa baseada na distância entre a bola e o agente
         distance = self.game.ball.get_distance(self.game.agent)

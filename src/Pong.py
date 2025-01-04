@@ -128,8 +128,7 @@ class Game:
             self.all_sprites.draw()
 
             # visualize the best individual
-            best_individual = self.evo_agent.get_best_individual()
-            self.evo_agent.visualize_individual(self.screen, best_individual)
+            #self.evo_agent.visualize_individual(self.screen, self.evo_agent.model)
 
             # update display
             pygame.display.update()

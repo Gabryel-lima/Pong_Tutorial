@@ -32,7 +32,7 @@ class Visualizer:
         self.draw_connections(screen, weights, inputs, outputs, left, right, top, bottom)
         self.draw_nodes(screen, inputs, outputs, weights, biases, left, right, top, bottom, output_labels)
 
-        pygame.display.update()
+        pygame.display.flip()
 
     def draw_connections(self, screen, weights, inputs, outputs, left, right, top, bottom):
         for i in range(inputs):

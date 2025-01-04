@@ -73,21 +73,17 @@ class EvoAgent:
             self.visualizer.update()
             self.visualizer.draw_network(screen, model)
 
-    def get_best_individual(self):
-        self.population.sort()
-        return self.population[0]
-        
     def init_population(self) -> None:
         # y = ⨍(Wⅹ + b)
 
         for _ in range(self.population_size):
-            self.model = self.create_model()
-            self.population.append(self.model)
+            model = self.create_model()
+            self.population.append(model)
 
     def create_model(self):
         return keras.Sequential([
             keras.layers.Input(self.input_shape),
-            #keras.layers.Dense(3, activation='relu'),
+            keras.layers.Dense(self.num_actions, activation='relu'),
             keras.layers.Dense(self.num_actions, activation='tanh')])
 
     def get_individual(self, model) -> np.ndarray:
@@ -98,6 +94,7 @@ class EvoAgent:
 
         while not time_step.is_last():
             state = time_step.observation
+            self.visualize_individual(self.env.game.screen, model)
             action_values = model(np.expand_dims(state, axis=0), training=False)
             action_idx = int(np.argmax(action_values.numpy()[0]))
             action = action_idx - 1 # [0, 1, 2] -> [-1, 0, 1]
@@ -160,7 +157,7 @@ class EvoAgent:
             for individual in self.population:
                 fitness = self.get_individual(individual)
                 fitnesses.append(fitness)
-                self.visualize_individual(self.env.game.screen, individual)
+                #self.visualize_individual(self.env.game.screen, individual)
 
             max_fitness = np.max(fitnesses)
             avg_fitness = np.mean(fitnesses)
