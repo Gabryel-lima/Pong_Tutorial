@@ -83,7 +83,7 @@ class EvoAgent:
     def create_model(self):
         return keras.Sequential([
             keras.layers.Input(self.input_shape),
-            keras.layers.Dense(self.num_actions, activation='relu'),
+            keras.layers.Dense(8, activation='relu'),
             keras.layers.Dense(self.num_actions, activation='tanh')])
 
     def get_individual(self, model) -> np.ndarray:
@@ -94,11 +94,11 @@ class EvoAgent:
 
         while not time_step.is_last():
             state = time_step.observation
-            self.visualize_individual(self.env.game.screen, model)
-            action_values = model(np.expand_dims(state, axis=0), training=False)
+            action_values = model(np.expand_dims(state, axis=0), training=True)
             action_idx = int(np.argmax(action_values.numpy()[0]))
             action = action_idx - 1 # [0, 1, 2] -> [-1, 0, 1]
             time_step = self.env.step(action)
+            #self.visualize_individual(self.env.game.screen, model)
             total_reward += time_step.reward
 
         return total_reward

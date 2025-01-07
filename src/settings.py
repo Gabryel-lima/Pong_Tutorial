@@ -16,7 +16,7 @@ POS = {'player': (WINDOW_WIDTH - 50, WINDOW_HEIGHT / 2),
 
 SPEED = {'player': 115, 
          'opponent': 115, 
-         'ai': 10, 
+         'ai': 20, 
          'ball': 190}
 
 FPS = 60

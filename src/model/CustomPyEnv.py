@@ -78,8 +78,9 @@ class CustomPyEnvironment(PyEnvironment):
         Returns:
             ts.TimeStep: O estado inicial do ambiente após o reset.
         """
-        self.game.reset_game()
-        return self._create_timestep(self.get_obs(), ts.StepType.FIRST, 0.0, 1.0)
+        #self.game.reset_game()
+        obs = self.get_obs()
+        return self._create_timestep(obs, ts.StepType.FIRST, 0.0, 1.0)
 
     def _step(self, action: int) -> ts.TimeStep:
         """
@@ -93,11 +94,12 @@ class CustomPyEnvironment(PyEnvironment):
         """
         self._apply_action(action)
         reward, done = self.calculate_reward(action)
+        obs = self.get_obs()
     
         step_type = ts.StepType.MID if not done else ts.StepType.LAST
         discount = 1.0 if not done else 0.0
-    
-        return self._create_timestep(self.get_obs(), step_type, reward, discount)
+
+        return self._create_timestep(obs, step_type, reward, discount)
 
     def _create_timestep(self, obs, step_type, reward, discount) -> ts.TimeStep:
         """
@@ -127,45 +129,43 @@ class CustomPyEnvironment(PyEnvironment):
             action (int): Ação a ser aplicada (-1 - mover para cima, 1 - mover para baixo).
         """
         self.game.agent.get_direction(action)
-        self.game.agent.move(self.game.clock.tick() / 1000)
+        #self.game.agent.move(pygame.time.get_ticks() / 1000)
 
     def calculate_reward(self, action: int) -> tuple[float, bool]:
         """
         Calcula a recompensa para o jogador com base na posição da bola e do jogador.
-    
+
         Args:
             action (int): Ação tomada pelo jogador.
-    
+
         Returns:
             tuple[float, bool]: Recompensa obtida e se o episódio terminou.
         """
         reward = 0.0
         done = False
-    
+        
+        # Normalize distância
+        max_distance = self.game.screen.width
+        distance = self.game.ball.get_distance(self.game.agent) / max_distance
+
         # Penalidade se a bola passa pelo agente
-        # if self.game.ball.rect.right < self.game.agent.rect.left:
-        #     reward -= 5.0
-        #     done = True
-    
-        # Recompensa se a bola passa pelo jogador
-        if self.game.ball.rect.left > self.game.player.rect.right:
-            reward += 5.0
+        if self.game.agent.rect.right < self.game.ball.rect.left:
+            reward -= 3.0  # Penalidade maior
             done = True
-    
-        # Recompensa se o agente colide com a bola
+
+        # Recompensa significativa por colisão com a bola
         if self.game.agent.rect.colliderect(self.game.ball.rect):
-            reward += 5.0
-    
-        # Recompensa baseada na distância entre a bola e o agente
-        distance = self.game.ball.get_distance(self.game.agent)
-        scalar = 3e-4  # 0.0003
-        reward += scalar * (10 - distance) if distance < 10 else -scalar * distance
-    
+            reward += 5.0  # Incentivo principal
+
+        # Pequena penalidade incremental baseada na distância
+        reward -= 0.1 * distance
+
+        # Pequena recompensa por se aproximar da bola
+        reward += 0.1 / (distance + 1)
+
         # Reseta o jogo se o episódio terminou
         if done:
             self.game.reset_game()
-    
-        # print(f'{reward:.6f}', end='\r')
     
         return reward, done
 
@@ -174,7 +174,7 @@ class CustomPyEnvironment(PyEnvironment):
         Obtém a observação atual do ambiente.
 
         Returns:
-            np.ndarray: A observação baseada na posição da bola (x, y), posição do paddle do agente e velocidade da bola.
+            np.ndarray: A observação baseada na posição da bola y, posição do paddle do agente e velocidade da bola.
         """
         obs = self.game._render_game() / 255.0
         return obs
@@ -186,15 +186,16 @@ class CustomPyEnvironment(PyEnvironment):
         Args:
             mode (str): Modo de renderização ('human' ou 'rgb_array').
         """
-        if mode == self.render_mode:
+        if mode == "human":
             self.game._render_game()
             pygame.display.update()
-    
+
         elif mode == "rgb_array":
             return np.array([self.game.agent.rect.y, self.game.ball.rect.y], dtype=np.float32)
         
         else:
-            self.close()
+            raise ValueError(f"Modo de renderização '{mode}' não suportado.")
+
 
     def close(self) -> None:
         """

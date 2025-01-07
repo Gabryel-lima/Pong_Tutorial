@@ -41,21 +41,18 @@ class Game:
                          ball_sprites=self.ball_sprites, 
                          particules_sprites=self.particules_sprites, update_score=self.update_score)
         
-        self.player = Player((self.all_sprites, self.paddle_sprites), ball=self.ball)
+        #self.player = Player((self.all_sprites, self.paddle_sprites), ball=self.ball)
         #self.opponent = Opponent((self.all_sprites, self.paddle_sprites), ball=self.ball)
 
         # agent
         self.agent = Agent((self.all_sprites, self.paddle_sprites), ball=self.ball_sprites)
         self.evo_agent = EvoAgent(
-                env=CustomPyEnvironment(game=self, seed=42),
-                population_size=10,
-                num_generations=15,
+                env=CustomPyEnvironment(game=self),
+                population_size=15,
+                num_generations=150,
                 mutation_rate=0.2, 
                 elite_fraction=0.2,
-                set_seed=True,
-                seed_np=42,
-                seed_random=42,
-                seed_tf=42
+                set_seed=False
             )
 
         # font
@@ -79,7 +76,7 @@ class Game:
         # line separator
         pygame.draw.line(self.screen, COLORS['bg detail'], (WINDOW_WIDTH / 2, 0), (WINDOW_WIDTH / 2, WINDOW_HEIGHT), 5)
 
-    def update_score(self, side: Callable[[str], None]):
+    def update_score(self, side: Callable[[str], dict[int, str]]):
         self.score['player' if side == 'player' else 'opponent'] += 1
 
     def save_score(self):
@@ -103,8 +100,8 @@ class Game:
 
     def reset_game(self):
         self.load_score(reset=True)
-        self.player.reset()
-        self.agent.reset()
+        #self.player.reset()
+        #self.agent.reset()
 
     def _render_game(self):
         while self.runing:
@@ -134,7 +131,7 @@ class Game:
             pygame.display.update()
 
             # pos frame
-            return np.array([self.agent.rect.y, self.ball.rect.y], dtype=np.float32)
+            return np.array([self.agent.rect.y, self.ball.direction.y], dtype=np.float32)
 
         pygame.quit()
 

@@ -99,7 +99,9 @@ class Agent(Paddle):
 
     def get_direction(self, action=None):
         if action is not None:
-            self.rect.centery += action * self.speed
+            self.rect.y += action * self.speed
+            #self.rect.centery += action * self.speed
+            #self.direction += action * self.speed
 
     def reset(self):
         super().reset(POS['ai'])
@@ -124,12 +126,12 @@ class Player(Paddle):
 class Ball(pygame.sprite.Sprite):
     def __init__(self, *groups, 
                  paddle_sprites: pygame.sprite.Group, 
-                 ball_sprites: pygame.sprite.Group, 
+                 ball_sprites: pygame.sprite.Group,
                  particules_sprites: pygame.sprite.Group,
-                 update_score: Callable[[str], None]):
+                 update_score: Callable[[str], dict[int, str]]):
         super().__init__(*groups)
 
-        # TODO: Tentar entender porque que o sprite da bola parece estar piscando
+        # TODO: Tentar entender porque que o sprite da bola parece estar piscando: Era por causa da atualização do agente
 
         # references
         self.paddle_sprites = paddle_sprites
@@ -154,7 +156,7 @@ class Ball(pygame.sprite.Sprite):
         # rect & movement
         self.rect = self.image.get_frect(center = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2))
         self.old_rect = self.rect.copy()
-        self.direction = pygame.Vector2(x=choice((-1, 1)), y=uniform(0.4, 0.8) * choice((1, -1)))
+        self.direction = pygame.Vector2(x=choice((-1, 1)), y=uniform(0.4, 0.8) * choice((1, -1))).normalize()
 
         # timer
         self.start_time = pygame.time.get_ticks()
@@ -192,7 +194,9 @@ class Ball(pygame.sprite.Sprite):
             )
 
     def get_distance(self, paddle):
-        return abs(self.rect.centery - paddle.rect.centery) + abs(self.rect.centerx - paddle.rect.centerx)
+        dx = self.rect.centerx - paddle.rect.centerx
+        dy = self.rect.centery - paddle.rect.centery
+        return (dx**2 + dy**2) ** 0.5  # Distância Euclidiana
     
     def get_radius(self):
         return int(self.rect.width / 2)
@@ -236,19 +240,19 @@ class Ball(pygame.sprite.Sprite):
             self.direction.y *= -1
 
         # out of bounds
-        if self.rect.right >= WINDOW_WIDTH or self.rect.left <= 0:
-            scorer = 'player' if self.rect.x < WINDOW_WIDTH / 2 else 'opponent'
-            self.update_score(scorer)
-            self.reset()
-
-        # if self.rect.right >= WINDOW_WIDTH:
-        #    self.rect.right = WINDOW_WIDTH
-        #    self.direction.x *= -1
-
-        # if self.rect.left <= 0:
+        # if self.rect.right >= WINDOW_WIDTH or self.rect.left <= 0:
+        #     scorer = 'player' if self.rect.x < WINDOW_WIDTH / 2 else 'opponent'
+        #     self.update_score(scorer)
         #     self.reset()
-        #    self.rect.left = 0
-        #    self.direction.x *= -1
+
+        if self.rect.right >= WINDOW_WIDTH:
+           self.rect.right = WINDOW_WIDTH
+           self.direction.x *= -1
+
+        if self.rect.left <= 0:
+            self.rect.left = 0
+            self.reset()
+            # self.direction.x *= -1 quick left
 
     def reset(self):
         self.rect.center = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2) # A pos estava usadndo o tamanho da bola, o que fazia a bola sair um pouco do centro
