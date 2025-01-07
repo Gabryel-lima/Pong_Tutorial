@@ -100,40 +100,9 @@ class Game:
 
     def reset_game(self):
         self.load_score(reset=True)
+        #self.ball.reset()
         #self.player.reset()
         #self.agent.reset()
-
-    def _render_game(self):
-        while self.runing:
-            dt = self.clock.tick(FPS) / 1000 # convert to seconds
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.runing = False
-
-            # update
-            self.all_sprites.update(dt)
-
-            # particles test
-            self.particules_sprites.update(dt)
-
-            # draw
-            self.background()
-            self.display_score()
-
-            # particles test
-            self.particules_sprites.draw()
-            self.all_sprites.draw()
-
-            # visualize the best individual
-            #self.evo_agent.visualize_individual(self.screen, self.evo_agent.model)
-
-            # update display
-            pygame.display.update()
-
-            # pos frame
-            return np.array([self.agent.rect.y, self.ball.direction.y], dtype=np.float32)
-
-        pygame.quit()
 
     def run(self):
         while self.runing:
@@ -153,11 +122,17 @@ class Game:
             # draw
             self.background()
             self.display_score()
-            self.particules_sprites.draw()
             self.all_sprites.draw()
+            self.particules_sprites.draw()
+
+            # visualize the best individual
+            #self.evo_agent.visualize_individual(self.screen, self.evo_agent.model)
 
             # update display
             pygame.display.update()
+
+            # pos frame
+            return np.array([self.agent.rect.y, self.ball.direction.y], dtype=np.float32)
 
         pygame.quit()
 

@@ -94,7 +94,7 @@ class EvoAgent:
 
         while not time_step.is_last():
             state = time_step.observation
-            action_values = model(np.expand_dims(state, axis=0), training=True)
+            action_values = model(np.expand_dims(state, axis=0), training=False)
             action_idx = int(np.argmax(action_values.numpy()[0]))
             action = action_idx - 1 # [0, 1, 2] -> [-1, 0, 1]
             time_step = self.env.step(action)

@@ -99,9 +99,9 @@ class Agent(Paddle):
 
     def get_direction(self, action=None):
         if action is not None:
-            self.rect.y += action * self.speed
+            #self.rect.y += action * self.speed
             #self.rect.centery += action * self.speed
-            #self.direction += action * self.speed
+            self.direction += action * self.speed
 
     def reset(self):
         super().reset(POS['ai'])
@@ -175,7 +175,7 @@ class Ball(pygame.sprite.Sprite):
         for threshold, stage in self.particle_stages:
             if speed <= threshold:
                 return stage
-        return self.particle_stages[-1][1]
+        return self.particle_stages[-1][1] # if not stages, return final idx
 
     def _create_particles(self):
         speed = self.direction.length()
@@ -251,8 +251,8 @@ class Ball(pygame.sprite.Sprite):
 
         if self.rect.left <= 0:
             self.rect.left = 0
-            self.reset()
-            # self.direction.x *= -1 quick left
+            #self.reset()
+            # self.direction.x *= -1 # quick left
 
     def reset(self):
         self.rect.center = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2) # A pos estava usadndo o tamanho da bola, o que fazia a bola sair um pouco do centro

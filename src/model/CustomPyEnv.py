@@ -50,7 +50,7 @@ class CustomPyEnvironment(PyEnvironment):
         self.total_reward = 0.0
 
         # seed
-        self.seed(seed) if seed is not None else np.random.randint(1, 1e+6)
+        self.seed(seed) or np.random.randint(1, 1e+6)
             
     def seed(self, seed: int) -> None:
         """
@@ -78,7 +78,6 @@ class CustomPyEnvironment(PyEnvironment):
         Returns:
             ts.TimeStep: O estado inicial do ambiente após o reset.
         """
-        #self.game.reset_game()
         obs = self.get_obs()
         return self._create_timestep(obs, ts.StepType.FIRST, 0.0, 1.0)
 
@@ -149,7 +148,7 @@ class CustomPyEnvironment(PyEnvironment):
         distance = self.game.ball.get_distance(self.game.agent) / max_distance
 
         # Penalidade se a bola passa pelo agente
-        if self.game.agent.rect.right < self.game.ball.rect.left:
+        if self.game.ball.rect.left <= 0: # TODO: O estado do reinicio termina mais rápido do que o próprio timestep. Ainda não sei bem o porque disto
             reward -= 3.0  # Penalidade maior
             done = True
 
@@ -164,9 +163,10 @@ class CustomPyEnvironment(PyEnvironment):
         reward += 0.1 / (distance + 1)
 
         # Reseta o jogo se o episódio terminou
+
         if done:
             self.game.reset_game()
-    
+
         return reward, done
 
     def get_obs(self) -> np.ndarray:
@@ -176,7 +176,7 @@ class CustomPyEnvironment(PyEnvironment):
         Returns:
             np.ndarray: A observação baseada na posição da bola y, posição do paddle do agente e velocidade da bola.
         """
-        obs = self.game._render_game() / 255.0
+        obs = self.game.run() / 255.0
         return obs
 
     def render(self, mode="human") -> np.ndarray:
@@ -187,7 +187,7 @@ class CustomPyEnvironment(PyEnvironment):
             mode (str): Modo de renderização ('human' ou 'rgb_array').
         """
         if mode == "human":
-            self.game._render_game()
+            self.game.run()
             pygame.display.update()
 
         elif mode == "rgb_array":
