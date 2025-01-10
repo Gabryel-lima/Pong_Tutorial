@@ -99,9 +99,7 @@ class Agent(Paddle):
 
     def get_direction(self, action=None):
         if action is not None:
-            #self.rect.y += action * self.speed
-            #self.rect.centery += action * self.speed
-            self.direction += action * self.speed
+            self.rect.centery += action * self.speed
 
     def reset(self):
         super().reset(POS['ai'])
@@ -240,18 +238,18 @@ class Ball(pygame.sprite.Sprite):
             self.direction.y *= -1
 
         # out of bounds
-        # if self.rect.right >= WINDOW_WIDTH or self.rect.left <= 0:
-        #     scorer = 'player' if self.rect.x < WINDOW_WIDTH / 2 else 'opponent'
-        #     self.update_score(scorer)
+        if self.rect.right >= WINDOW_WIDTH or self.rect.left <= 0:
+            scorer = 'player' if self.rect.x < WINDOW_WIDTH / 2 else 'opponent'
+            self.update_score(scorer)
+            self.reset()
+
+        # if self.rect.right >= WINDOW_WIDTH:
+        #    self.rect.right = WINDOW_WIDTH
+        #    self.direction.x *= -1
+
+        # if self.rect.left <= 0:
+        #     self.rect.left = 0
         #     self.reset()
-
-        if self.rect.right >= WINDOW_WIDTH:
-           self.rect.right = WINDOW_WIDTH
-           self.direction.x *= -1
-
-        if self.rect.left <= 0:
-            self.rect.left = 0
-            #self.reset()
             # self.direction.x *= -1 # quick left
 
     def reset(self):

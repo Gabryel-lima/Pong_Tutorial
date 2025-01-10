@@ -41,14 +41,14 @@ class Game:
                          ball_sprites=self.ball_sprites, 
                          particules_sprites=self.particules_sprites, update_score=self.update_score)
         
-        #self.player = Player((self.all_sprites, self.paddle_sprites), ball=self.ball)
+        self.player = Player((self.all_sprites, self.paddle_sprites), ball=self.ball)
         #self.opponent = Opponent((self.all_sprites, self.paddle_sprites), ball=self.ball)
 
         # agent
         self.agent = Agent((self.all_sprites, self.paddle_sprites), ball=self.ball_sprites)
         self.evo_agent = EvoAgent(
                 env=CustomPyEnvironment(game=self),
-                population_size=15,
+                population_size=50,
                 num_generations=150,
                 mutation_rate=0.2, 
                 elite_fraction=0.2,
@@ -97,12 +97,6 @@ class Game:
         except FileNotFoundError:
             self.score = {'player': 0, 'opponent': 0}
             self.save_score()
-
-    def reset_game(self):
-        self.load_score(reset=True)
-        #self.ball.reset()
-        #self.player.reset()
-        #self.agent.reset()
 
     def run(self):
         while self.runing:
