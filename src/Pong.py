@@ -5,8 +5,8 @@ from groups import AllSprites, Ball_Group, Paddle_Group, Particules_Group
 
 from typing import Callable
 
-from model.EvoAgent import EvoAgent
-from model.CustomPyEnv import CustomPyEnvironment
+# from model.EvoAgent import EvoAgent
+# from model.CustomPyEnv import CustomPyEnvironment
 
 
 class Game:
