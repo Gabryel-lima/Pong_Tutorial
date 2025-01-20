@@ -112,11 +112,13 @@ class Player(Paddle):
         self.ball = ball
 
     def get_direction(self):
-        # keys = pygame.key.get_pressed()
-        # self.direction = int(keys[pygame.K_DOWN] - keys[pygame.K_UP])
+        # Player direction
+        keys = pygame.key.get_pressed()
+        self.direction = int(keys[pygame.K_DOWN] - keys[pygame.K_UP])
         # -------------------------------------------------------------- #
 
-        self.direction = 1 if self.ball.rect.centery > self.rect.centery else -1
+        # Agent direction
+        # self.direction = 1 if self.ball.rect.centery > self.rect.centery else -1
     
     def reset(self):
         super().reset(POS['player'])
@@ -128,8 +130,6 @@ class Ball(pygame.sprite.Sprite):
                  particules_sprites: pygame.sprite.Group,
                  update_score: Callable[[str], dict[int, str]]):
         super().__init__(*groups)
-
-        # TODO: Tentar entender porque que o sprite da bola parece estar piscando: Era por causa da atualização do agente
 
         # references
         self.paddle_sprites = paddle_sprites
