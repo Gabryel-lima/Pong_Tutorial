@@ -42,18 +42,18 @@ class Game:
                          particules_sprites=self.particules_sprites, update_score=self.update_score)
         
         self.player = Player((self.all_sprites, self.paddle_sprites), ball=self.ball)
-        #self.opponent = Opponent((self.all_sprites, self.paddle_sprites), ball=self.ball)
+        self.opponent = Opponent((self.all_sprites, self.paddle_sprites), ball=self.ball)
 
-        # agent
-        self.agent = Agent((self.all_sprites, self.paddle_sprites), ball=self.ball_sprites)
-        self.evo_agent = EvoAgent(
-                env=CustomPyEnvironment(game=self),
-                population_size=50,
-                num_generations=150,
-                mutation_rate=0.2, 
-                elite_fraction=0.2,
-                set_seed=False
-            )
+        # # agent
+        # self.agent = Agent((self.all_sprites, self.paddle_sprites), ball=self.ball_sprites)
+        # self.evo_agent = EvoAgent(
+        #         env=CustomPyEnvironment(game=self),
+        #         population_size=50,
+        #         num_generations=150,
+        #         mutation_rate=0.2, 
+        #         elite_fraction=0.2,
+        #         set_seed=False
+        #     )
 
         # font
         self.font = pygame.Font(None, 60)
@@ -141,8 +141,8 @@ def main_model():
     game.evo_agent.plot_fitness()
 
 def main():
-    #Game().run()
-    main_model()
+    Game().run()
+    #main_model()
 
 if __name__ == '__main__':
     main()
