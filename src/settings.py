@@ -8,7 +8,7 @@ import json
 WINDOW_WIDTH, WINDOW_HEIGHT = (700, 540) 
 
 SIZE = {'paddle': (18, 70), 
-        'ball': (16, 16)} # Um circulo não precisa de um tamanho em x e y, mas para manter a consistência com o paddle, foi mantido.
+        'ball': (16, 16)} # Um circulo não precisa de um tamanho em x e y em seu desenho na tela, apenas um valor de raio. Mas para manter a consistência com o paddle, foi mantido.
 
 POS = {'player': (WINDOW_WIDTH - 50, WINDOW_HEIGHT / 2), 
        'opponent': (50, WINDOW_HEIGHT / 2), 

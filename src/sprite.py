@@ -13,7 +13,7 @@ class ParticleStages:
 
 class Particles(pygame.sprite.Sprite):
     def __init__(self, *groups, x, y, radius, color, lifetime=1.0):
-        super().__init__(*groups)
+        super().__init__(groups)
 
         # attributes
         self.x, self.y = x, y
@@ -36,11 +36,11 @@ class Particles(pygame.sprite.Sprite):
             self.kill()
         else:
             alpha = int(255 * (1 - self.elapsed_time / self.lifetime))
-            self.image.fill((*self.color[:3], alpha), special_flags=pygame.BLEND_RGBA_MULT)
+            self.image.fill((self.color[:3], alpha), special_flags=pygame.BLEND_RGBA_MULT)
 
 class Paddle(pygame.sprite.Sprite):
     def __init__(self, *groups):
-        super().__init__(*groups)
+        super().__init__(groups)
 
         # image
         self.image = pygame.Surface(SIZE['paddle'], pygame.SRCALPHA)
@@ -71,7 +71,7 @@ class Paddle(pygame.sprite.Sprite):
 
 class Opponent(Paddle):
     def __init__(self, *groups, ball):
-        super().__init__(*groups)
+        super().__init__(groups)
 
         # rect & movement
         self.speed = SPEED['opponent']
@@ -88,7 +88,7 @@ class Opponent(Paddle):
 
 class Agent(Paddle):
     def __init__(self, *groups, ball):
-        super().__init__(*groups)
+        super().__init__(groups)
 
         # reference
         self.ball = ball
@@ -106,7 +106,7 @@ class Agent(Paddle):
 
 class Player(Paddle):
     def __init__(self, *groups, ball):
-        super().__init__(*groups)
+        super().__init__(groups)
 
         # reference
         self.ball = ball
@@ -129,7 +129,7 @@ class Ball(pygame.sprite.Sprite):
                  ball_sprites: pygame.sprite.Group,
                  particules_sprites: pygame.sprite.Group,
                  update_score: Callable[[str], dict[int, str]]):
-        super().__init__(*groups)
+        super().__init__(groups)
 
         # references
         self.paddle_sprites = paddle_sprites
@@ -180,8 +180,8 @@ class Ball(pygame.sprite.Sprite):
         stage = self._get_particle_stage(speed)
 
         for _ in range(stage.count):
-            offset_x = np.random.randint(*stage.burn_size)
-            offset_y = np.random.randint(*stage.burn_size)
+            offset_x = np.random.randint(stage.burn_size)
+            offset_y = np.random.randint(stage.burn_size)
             Particles(
                 self.particules_sprites,
                 x=self.rect.centerx + offset_x,

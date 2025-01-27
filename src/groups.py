@@ -41,5 +41,3 @@ class Particules_Group(pygame.sprite.Group):
         for sprite in self:
             self.screen.blit(sprite.image, sprite.rect)
 
-    def handle_event(self, event):
-        pass
