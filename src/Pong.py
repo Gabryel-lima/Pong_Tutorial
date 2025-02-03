@@ -36,16 +36,16 @@ class Game:
         self.particules_sprites = Particules_Group()
 
         # classes
-        self.ball = Ball((self.all_sprites, self.ball_sprites), 
+        self.ball = Ball((self.all_sprites), 
                          paddle_sprites=self.paddle_sprites, 
                          ball_sprites=self.ball_sprites, 
                          particules_sprites=self.particules_sprites, update_score=self.update_score)
         
-        self.player = Player((self.all_sprites, self.paddle_sprites), ball=self.ball)
-        self.opponent = Opponent((self.all_sprites, self.paddle_sprites), ball=self.ball)
+        self.player = Player((self.all_sprites, self.paddle_sprites), ball_sprites=self.ball)
+        self.opponent = Opponent((self.all_sprites, self.paddle_sprites), ball_sprites=self.ball)
 
         # # agent
-        # self.agent = Agent((self.all_sprites, self.paddle_sprites), ball=self.ball_sprites)
+        # self.agent = Agent((self.all_sprites, self.paddle_sprites), ball_sprites=self.ball_sprites)
         # self.evo_agent = EvoAgent(
         #         env=CustomPyEnvironment(game=self),
         #         population_size=50,
@@ -126,7 +126,7 @@ class Game:
             pygame.display.update()
 
             # pos frame
-            return np.array([self.agent.rect.y, self.ball.direction.y], dtype=np.float32)
+            #return np.array([self.agent.rect.y, self.ball.direction.y], dtype=np.float32)
 
         pygame.quit()
 

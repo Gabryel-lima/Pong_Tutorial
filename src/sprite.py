@@ -36,7 +36,7 @@ class Particles(pygame.sprite.Sprite):
             self.kill()
         else:
             alpha = int(255 * (1 - self.elapsed_time / self.lifetime))
-            self.image.fill((self.color[:3], alpha), special_flags=pygame.BLEND_RGBA_MULT)
+            self.image.fill((*self.color[:3], alpha), special_flags=pygame.BLEND_RGBA_MULT)
 
 class Paddle(pygame.sprite.Sprite):
     def __init__(self, *groups):
@@ -70,7 +70,7 @@ class Paddle(pygame.sprite.Sprite):
         self.rect.center = position
 
 class Opponent(Paddle):
-    def __init__(self, *groups, ball):
+    def __init__(self, *groups, ball_sprites):
         super().__init__(groups)
 
         # rect & movement
@@ -78,7 +78,7 @@ class Opponent(Paddle):
         self.rect.center = POS['opponent']
 
         # reference
-        self.ball = ball
+        self.ball = ball_sprites
 
     def get_direction(self):
         self.direction = 1 if self.ball.rect.centery > self.rect.centery else -1
@@ -87,11 +87,11 @@ class Opponent(Paddle):
         super().reset(POS['opponent'])
 
 class Agent(Paddle):
-    def __init__(self, *groups, ball):
+    def __init__(self, *groups, ball_sprites):
         super().__init__(groups)
 
         # reference
-        self.ball = ball
+        self.ball = ball_sprites
 
         # rect & movement
         self.speed = SPEED['ai']
@@ -105,11 +105,11 @@ class Agent(Paddle):
         super().reset(POS['ai'])
 
 class Player(Paddle):
-    def __init__(self, *groups, ball):
+    def __init__(self, *groups, ball_sprites):
         super().__init__(groups)
 
         # reference
-        self.ball = ball
+        self.ball = ball_sprites
 
     def get_direction(self):
         # Player direction
@@ -180,8 +180,8 @@ class Ball(pygame.sprite.Sprite):
         stage = self._get_particle_stage(speed)
 
         for _ in range(stage.count):
-            offset_x = np.random.randint(stage.burn_size)
-            offset_y = np.random.randint(stage.burn_size)
+            offset_x = np.random.randint(*stage.burn_size)
+            offset_y = np.random.randint(*stage.burn_size)
             Particles(
                 self.particules_sprites,
                 x=self.rect.centerx + offset_x,

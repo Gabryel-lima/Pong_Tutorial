@@ -27,15 +27,10 @@ class Paddle_Group(pygame.sprite.Group):
         super().__init__()
         self.screen = pygame.display.get_surface()
 
-    # def draw(self):
-    #     for sprite in self:
-    #         self.screen.blit(sprite.image, sprite.rect)
-
 class Particules_Group(pygame.sprite.Group):
     def __init__(self):
         super().__init__()
         self.screen = pygame.display.get_surface()
-        self.space_pressed = False
 
     def draw(self):
         for sprite in self:
