@@ -125,10 +125,10 @@ class Player(Paddle):
 
 class Ball(pygame.sprite.Sprite):
     def __init__(self, *groups, 
-                 paddle_sprites: pygame.sprite.Group, 
-                 ball_sprites: pygame.sprite.Group,
-                 particules_sprites: pygame.sprite.Group,
-                 update_score: Callable[[str], dict[int, str]]):
+                paddle_sprites: pygame.sprite.Group, 
+                ball_sprites: pygame.sprite.Group,
+                particules_sprites: pygame.sprite.Group,
+                update_score: Callable[[str], dict[int, str]]):
         super().__init__(groups)
 
         # references
@@ -140,16 +140,16 @@ class Ball(pygame.sprite.Sprite):
         # image
         self.image = pygame.Surface(SIZE['ball'], pygame.SRCALPHA)
         pygame.draw.circle(self.image, 
-                           COLORS['ball'], 
-                           (SIZE['ball'][0] / 2, SIZE['ball'][1] / 2), 
-                           SIZE['ball'][0] / 2)
+                            COLORS['ball'], 
+                            (SIZE['ball'][0] / 2, SIZE['ball'][1] / 2), 
+                            SIZE['ball'][0] / 2)
 
         # shadow surf
         self.shadow_surf = self.image.copy()
         pygame.draw.circle(self.shadow_surf, 
-                           COLORS['ball shadow'], 
-                           (SIZE['ball'][0] / 2, SIZE['ball'][1] / 2), 
-                           SIZE['ball'][0] / 2)
+                            COLORS['ball shadow'], 
+                            (SIZE['ball'][0] / 2, SIZE['ball'][1] / 2), 
+                            SIZE['ball'][0] / 2)
 
         # rect & movement
         self.rect = self.image.get_frect(center = (WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2))

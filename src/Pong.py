@@ -37,9 +37,9 @@ class Game:
 
         # classes
         self.ball = Ball((self.all_sprites), 
-                         paddle_sprites=self.paddle_sprites, 
-                         ball_sprites=self.ball_sprites, 
-                         particules_sprites=self.particules_sprites, update_score=self.update_score)
+                        paddle_sprites=self.paddle_sprites, 
+                        ball_sprites=self.ball_sprites, 
+                        particules_sprites=self.particules_sprites, update_score=self.update_score)
         
         self.player = Player((self.all_sprites, self.paddle_sprites), ball_sprites=self.ball)
         self.opponent = Opponent((self.all_sprites, self.paddle_sprites), ball_sprites=self.ball)
