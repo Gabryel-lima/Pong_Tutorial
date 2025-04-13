@@ -1,0 +1,1 @@
+print("Requires Python3.10!")

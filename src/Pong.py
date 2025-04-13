@@ -45,6 +45,7 @@ class Game:
         self.opponent = Opponent((self.all_sprites, self.paddle_sprites), ball_sprites=self.ball)
 
         # # agent
+        # TODO: Not Complete. Genetic Algorithm Agent for Reinforcement Learning.
         # self.agent = Agent((self.all_sprites, self.paddle_sprites), ball_sprites=self.ball_sprites)
         # self.evo_agent = EvoAgent(
         #         env=CustomPyEnvironment(game=self),
@@ -130,15 +131,16 @@ class Game:
 
         pygame.quit()
 
-def main_model():
-    game = Game()
-    game.evo_agent.train()
-    game.evo_agent.evaluate_best()
+# def main_model():
+# TODO: Not Complete. Genetic Algorithm Agent for Reinforcement Learning.
+#     game = Game()
+#     game.evo_agent.train()
+#     game.evo_agent.evaluate_best()
 
-    game.evo_agent.save_best_model('src/model/best_model.keras')
-    game.evo_agent.save_best_model_tflite('src/model/best_model.tflite')
+#     game.evo_agent.save_best_model('src/model/best_model.keras')
+#     game.evo_agent.save_best_model_tflite('src/model/best_model.tflite')
 
-    game.evo_agent.plot_fitness()
+#     game.evo_agent.plot_fitness()
 
 def main():
     Game().run()

@@ -15,8 +15,14 @@ import matplotlib.pyplot as plt
 
 from model.Visualizer import Visualizer
 
+# Python3.10
 
 class EvoAgent:
+    # TODO: Not Complete. Genetic Algorithm Agent for Reinforcement Learning.
+    
+    """Requires a PyEnvironment and a population size to initialize the agent.
+    The agent will create a population of models and train them using a genetic algorithm.
+    The agent will also create a visualizer to visualize the models."""
     def __init__(self, env, population_size: int = 50, num_generations: int = 100, 
                  mutation_rate: float = 0.1, elite_fraction: float = 0.2, set_seed: bool = True,
                  seed_np: int = None, seed_random: int = None, seed_tf: int = None):
@@ -215,4 +221,4 @@ class EvoAgent:
         plt.xlabel('Geração')
         plt.ylabel('Fitness')
         plt.grid(True)
-        plt.savefig('./train')
+        plt.savefig('./src/model/train.png')
