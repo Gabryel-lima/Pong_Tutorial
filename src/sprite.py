@@ -4,6 +4,11 @@ from random import choice, uniform
 from typing import Callable
 from dataclasses import dataclass
 
+def play_sound(sound: str, volume: float = 0.3):
+    sound = pygame.mixer.Sound(sound)
+    sound.set_volume(volume)
+    sound.play()
+
 @dataclass
 class ParticleStages:
     count: int
@@ -160,6 +165,7 @@ class Ball(pygame.sprite.Sprite):
         self.start_time = pygame.time.get_ticks()
         self.duration = 1200 # ms
         self.speed_modifier = 0
+        #self._initial_speed = SPEED['ball']
 
         # particle stages
         self.particle_stages = [
@@ -176,8 +182,8 @@ class Ball(pygame.sprite.Sprite):
         return self.particle_stages[-1][1] # if not stages, return final idx
 
     def _create_particles(self):
-        speed = self.direction.length()
-        stage = self._get_particle_stage(speed)
+        current_speed = self.direction.length()
+        stage = self._get_particle_stage(current_speed)
 
         for _ in range(stage.count):
             offset_x = np.random.randint(*stage.burn_size)
@@ -206,6 +212,7 @@ class Ball(pygame.sprite.Sprite):
         self.collision('vertical')
 
     def gradual_speed(self, scalar=0.1):
+        # Multiply the speed modifier by a scalar value
         return 1 + scalar * self.speed_modifier
 
     def collision(self, direction):
@@ -213,9 +220,11 @@ class Ball(pygame.sprite.Sprite):
             if sprite.rect.colliderect(self.rect):
                 if direction == 'horizontal':
                     if self.rect.right >= sprite.rect.left and self.old_rect.right <= sprite.old_rect.left:
+                        play_sound('sounds/paddle_hit.wav', 0.30)
                         self.rect.right = sprite.rect.left
                         self.direction.x *= -1 * self.gradual_speed()
                     if self.rect.left <= sprite.rect.right and self.old_rect.left >= sprite.old_rect.right:
+                        play_sound('sounds/paddle_hit.wav', 0.30)
                         self.rect.left = sprite.rect.right
                         self.direction.x *= -1 * self.gradual_speed()
                 else:
@@ -240,7 +249,13 @@ class Ball(pygame.sprite.Sprite):
         # out of bounds
         if self.rect.right >= WINDOW_WIDTH or self.rect.left <= 0:
             scorer = 'player' if self.rect.x < WINDOW_WIDTH / 2 else 'opponent'
+            play_sound('sounds/another_game_over.wav', 0.30)
             self.update_score(scorer)
+            
+            # reseta TODOS os paddles no grupo. Eu sei não está bonito, mas é o jeito mais fácil.
+            for paddle in self.paddle_sprites:
+                paddle.reset()
+
             self.reset()
 
         # if self.rect.right >= WINDOW_WIDTH:
