@@ -7,7 +7,7 @@ cx_Freeze==8.2.0
 decorator==5.2.1
 exceptiongroup==1.2.2
 filelock==3.18.0
-h11==0.14.0
+h11==0.16.0
 idna==3.10
 imageio==2.37.0
 imageio-ffmpeg==0.6.0
