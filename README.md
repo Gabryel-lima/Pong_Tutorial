@@ -9,16 +9,19 @@ Este projeto é um tutorial de como criar um jogo de Pong utilizando Python e Py
 - `src/`: Contém o código principal do projeto, incluindo o ambiente personalizado, agentes e utilitários.
 - `requirements.txt`: Lista de dependências do projeto.
 
-## Dependências
-
-Para instalar as dependências, execute:
+## (work_in_progress)
 ### $ Recomendo utilizar o python3.11.9 por conta do tensorflow
 ### $ Se você não tiver gpu Nvidea ou sem instrução AVX2, FMA. Para o tensorflow-cpu. 
 
-### $ Vou deixar o modelo pré-treinado do tflitle, e mais para frente vou trazer a versão sem dependência da lib. TODO
+### $ Vou deixar o modelo pré-treinado do tflitle, e mais para frente vou trazer a versão sem dependência da lib.
 
+## Dependências
+Para instalar as dependências, execute:
+
+- Se você estiver pelo Linux este arquivo setup.sh vai facilitar a criação do .venv 
+- A versão usada do interpretador para o game é Python3.10.16
 ```bash
-pip install -r requirements.txt
+chmod +x ./setup.sh && ./setup.sh
 ```
 
 ## Executando o Jogo
