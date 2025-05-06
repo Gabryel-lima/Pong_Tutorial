@@ -7,8 +7,9 @@ else:
     base = None
 
 build_options = {
-    'packages': ['pygame-ce'],
-    'include_files': ['sounds/', 'data/', 'src/']
+    'packages': [],
+    'include_files': ['sounds/', 'data/', 'src/', 
+                      'src/sprite.py', 'src/groups.py', 'src/utils.py']
 }
 
 executables = [

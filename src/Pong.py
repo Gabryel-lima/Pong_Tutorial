@@ -1,7 +1,7 @@
-from settings import *
+from src.config.settings import *
 
-from sprite import Ball, Player, Opponent, Agent
-from groups import AllSprites, Ball_Group, Paddle_Group, Particules_Group
+from src.sprite import Ball, Player, Opponent, Agent
+from src.groups import AllSprites, Ball_Group, Paddle_Group, Particules_Group
 
 from typing import Callable
 

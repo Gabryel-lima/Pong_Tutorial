@@ -1,4 +1,4 @@
-from settings import *
+from src.config.settings import *
 from random import choice, uniform
 
 from typing import Callable
