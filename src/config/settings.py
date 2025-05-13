@@ -1,10 +1,3 @@
-import pygame
-import numpy as np
-from os.path import join
-import os
-import json
-
-
 WINDOW_WIDTH, WINDOW_HEIGHT = (700, 540) 
 
 SIZE = {'paddle': (18, 70), 
@@ -32,11 +25,6 @@ COLORS = {
 }
 
 __all__ = [
-    'pygame',
-    'np',
-    'join',
-    'json',
-    'os',
     'WINDOW_WIDTH',
     'WINDOW_HEIGHT',
     'SIZE',

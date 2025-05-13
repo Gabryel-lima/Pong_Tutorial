@@ -1,7 +1,13 @@
-from src.config.settings import *
+import pygame
+import numpy as np
+from os.path import join
+import os
+import json
 
-from src.sprite import Ball, Player, Opponent, Agent
-from src.groups import AllSprites, Ball_Group, Paddle_Group, Particules_Group
+from config.settings import WINDOW_WIDTH, WINDOW_HEIGHT, FPS, COLORS
+
+from sprite import Ball, Player, Opponent, Agent
+from groups import AllSprites, Ball_Group, Paddle_Group, Particules_Group
 
 from typing import Callable
 

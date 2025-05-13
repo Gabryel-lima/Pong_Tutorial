@@ -1,5 +1,8 @@
-from src.config.settings import *
+import pygame
+import numpy as np
 from random import choice, uniform
+
+from config.settings import WINDOW_WIDTH, WINDOW_HEIGHT, SIZE, POS, SPEED, COLORS
 
 from typing import Callable
 from dataclasses import dataclass
